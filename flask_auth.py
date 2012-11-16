@@ -1,7 +1,6 @@
 #-*- coding: utf-8 -*-
-import oauth2
+from oauth2client.client import OAuth2WebServerFlow
 import config
-import json
 from flask import Flask, request, redirect
 
 
@@ -16,21 +15,27 @@ def parse_token(token):
 
 
 
-def auth_twitter(conf):
-    consumer = oauth2.Consumer(key=conf.TWITTER_CONSUMER_KEY,
-                               secret=conf.TWITTER_CONSUMER_SECRET)
-    client = oauth2.Client(consumer)
-    response, token = client.request(conf.TWITTER_REQUEST_URL, 'GET')
-    if response.status == 200:
-        access_token = parse_token(token)
-        return '%s?oauth_token=%s' % (conf.TWITTER_AUTH_URL,
-                                      access_token['oauth_token'])
-    return 'error'
+def auth_google(conf):
+    print 'hoge'
+    flow = OAuth2WebServerFlow(client_id=conf.CLIENT_ID,
+                               client_secret=conf.CLIENT_SECRET,
+                               scope=conf.AUTH_SCOPE,
+                               redirect_uri=conf.HOST + 'auth')
+    auth_uri = flow.step1_get_authorize_url()
+    print auth_uri
+    return auth_uri
+
+
+@app.route('/auth')
+def auth_return():
+    credentials = flow.step2_exchange(code)
+    print credintials
+    return 'test'
+
 
 @app.route('/')
 def auth():
-    return redirect(auth_twitter(config.Config))
-
+    return redirect(auth_google(config.Config))
 
 
 if __name__ == '__main__':
