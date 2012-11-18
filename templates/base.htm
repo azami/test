@@ -3,41 +3,6 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     {% block head %}
-    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
-    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.2/jquery-ui.min.js"></script>
-    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/googleapis/0.0.4/googleapis.min.js"></script>
-    <script type="text/javascript" src="https://ajax.googleapis.com/jsapi"></script>
-    <script type="text/javascript">
-       google.load("identitytoolkit", "1.0", {packages: ["ac"]});
-    </script>
-    <script type="text/javascript">
-    function changeTryFedFrist() {
-      var value = jQuery('#tryFedFirst').attr('checked');
-      window.google.identitytoolkit.easyrp.config.tryFederatedFirst = !!value;
-    }
-
-    function changeUseCachedUserStatus() {
-      var value = jQuery('#useCachedUserStatus').attr('checked');
-      window.google.identitytoolkit.easyrp.config.useCachedUserStatus = !!value;
-    }
-    $(function(){
-      window.google.identitytoolkit.setConfig({
-        developerKey: "{{ dev_key }}",
-        //companyName: "{{ appname }}",
-        callbackUrl: "{{ callback }}", // must be a full URL
-        userStatusUrl: "/userStatus", // these can just be partial paths
-        loginUrl: "/login",
-        signupUrl: "/signup",
-        homeUrl: "/home",
-        logoutUrl: "/logout",
-        realm: "", // optional
-        idps: ["Gmail", "Hotmail", "Yahoo"],
-        tryFederatedFirst: true,
-        useCachedUserStatus: false
-      });
-      $('#navbar').accountChooser();
-    });
-    </script>
     <link rel="stylesheet" href="style.css" />
     <title>{% block title %}{% endblock %} - My Webpage</title>
     {% endblock %}
@@ -46,9 +11,8 @@
     <div id="header">
         {% block header %}
         <div id="navbar">
-          <a href="javascript: void(0)">
-              <span>Gmail</span>
-          </a>
+            {% if not config['adfree'] %}
+            {% endif %}
         </div>
         {% endblock %}
     </div>

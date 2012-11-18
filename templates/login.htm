@@ -1,0 +1,16 @@
+{% extends "base.htm" %}
+{% block title %}login{% endblock %}
+{% block content %}
+{% if conf['message'] %}
+<div id="error">{{ conf['message'] }}</id>
+{% endif %}
+{% import 'forms.htm' as forms %}
+<form action='{{ conf['root'] }}/login' method='post'/>
+    <dl>
+        <dt>メールアドレス</dt>
+        <dd> {{ forms.input('mail') }}</dd>
+        <dt>パスワード</dt>
+        <dd> {{ forms.input('password', type='password') }}</dd>
+        <dd> {{ forms.input('submit', type='submit', value='送信') }}</dd>
+</form>
+{% endblock %}
