@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from flask import Flask, request, g, render_template, url_for, session, redirect
-from config import Config
+from config import Config, ROBOTS
 from db import User, Novel, Tag
 import util
 from urlparse import urljoin
@@ -28,19 +28,47 @@ def page_not_found(error):
     return render_template('error.htm', message=error), 404
 
 
+@app.errorhandler(500)
+def internal_server_error(error):
+    return render_template('error.htm', message=error), 500
+
+
+@app.route('/robots.txt')
+def robots():
+    if ROBOTS:
+        return ROBOTS
+    return page_not_found('')
+
+
+
 @app.route('/')
 def index():
-    return render_template('index.htm', config=g.config)
+    tag_list = [x[0] for x in \
+                      g.db_session.query(Tag.tag).filter(Tag.status == True).all()]
+    sorted_tag = sorted(set(tag_list),
+                        reverse=True, key=lambda x: tag_list.count(x))
+    if len(tag_list) > 200:
+        sorted_tag = sorted_tag[:200]
+    tags={}
+    print len(tag_list)
+    for tag in sorted_tag:
+        print tag_list.count(tag)
+        print int(len(tag_list) // tag_list.count(tag))
+        tags[tag]= {'size': int(len(tag_list) // tag_list.count(tag)),
+                    'num': tag_list.count(tag)}
+    return render_template('index.htm', tags=tags)
 
 
 @app.route('/tag/<tag>')
 @app.route('/tag/<tag>/<int:page>')
 def tag_search(tag, page=0):
-    tags = g.db_session.query(Tag).filter(Tag.tag == tag).all()
+    tags = g.db_session.query(Tag).filter(Tag.tag == tag).filter(Tag.status\
+                                                                 == True).all()
     tags = util.search_result(page, tags)
     if not tags:
         return page_not_found(u'検索結果がないです')
-    novels = sorted([tag.novel for tag in tags], key=lambda x: x.id)
+    novels = [tag.novel for tag in tags if tag.novel.status]
+    novels = sorted(novels, key=lambda x: x.id)
     return render_template('search.htm', novels=novels)
 
 
@@ -49,9 +77,9 @@ def tag_search(tag, page=0):
 def search(page=0):
     novels = []
     words = util.sanitize(request.args['words']).split()
-    user_query = g.db_session.query(User)
-    novel_query = g.db_session.query(Novel)
-    tag_query = g.db_session.query(Tag)
+    user_query = g.db_session.query(User).filter(User.status == True)
+    novel_query = g.db_session.query(Novel).filter(Novel.status == True)
+    tag_query = g.db_session.query(Tag).filter(Tag.status == True)
     for word in words:
         user_query = user_query.filter(User.name.like(word))
         novel_query = novel_query.filter(Novel.title.like(word))
@@ -60,12 +88,11 @@ def search(page=0):
 
     users = user_query.all()
     for user in users:
-        novels += user.novel_list
+        novels += [novel for novel in user.novel_list if novel.status]
     novels += novel_query.all()
     tags = tag_query.all()
-    novels += [tag.novel for tag in tags]
+    novels += [tag.novel for tag in tags if tag.novel.status]
     novels = sorted(util.search_result(page, set(novels)), key=lambda x: x.id)
-    print novels
     if not novels:
         return page_not_found(u'検索結果がないです')
     return render_template('search.htm', novels=novels)
@@ -78,7 +105,6 @@ def user_index():
     if not user:
         message = u'未知のエラーです'
         return render_template('error.htm', message=message)
-    print type(user.novels[0].title)
     return render_template('profile.htm', user=user, novels=user.novel_list)
 
 
@@ -125,7 +151,7 @@ def edit_profile():
     user = g.db_session.query(User).filter(User.id == session['user']).first()
     if not user:
         message = u'未知のエラーです'
-        return render_template('error.htm', message=message)
+        return internal_server_error(message)
     if request.method == 'GET':
         decode_user = util.decode_user(user)
         return render_template('update_user.htm', path=request.base_url,
@@ -158,7 +184,7 @@ def edit_novel(novel_id):
                                              Novel.id == novel_id).first()
     if not novel:
         message = u'未知のエラーです'
-        return render_template('error.htm', message=message)
+        return internal_server_error(message)
 
     tags = [tag.tag for tag in novel.tag_list if tag.status]
     if request.method == 'GET':
@@ -167,7 +193,6 @@ def edit_novel(novel_id):
         return render_template('update_novel.htm', title=u'小説情報編集',
                                novel=decode_novel, tags=' '.join(decode_tags))
     result = util.update_novel(request, g, novel)
-    print result
     if not result['status']:
         return result['page']
     return redirect(url_for('novelinfo', novel_id=result['id']))
