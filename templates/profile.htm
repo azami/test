@@ -5,13 +5,15 @@ ID: {{ user.id }}<br/>
 name: {{ user.name }}<br/>
 mail: {{ user.mail }}<br/>
 site: {{ user.site }}<br/>
-url:  {{ user.url }}<br/>
+url:  <a href="{{ url }}" target="_top">{{ user.url }}</a><br/>
 
 <br/>
 <br/>
 {% for novel in novels %}
+<br/>
 title: {{ novel.title }}<br/>
 summary: {{ novel.summary }}<br/>
+tag: {% for tag in novel.tag_list %}{{ tag.tag }} {% endfor %}<br/>
 <br/>
 {% endfor %}
 

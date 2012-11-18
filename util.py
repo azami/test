@@ -94,8 +94,9 @@ def check_form_user(request):
 def update_user(request, g, user=None):
     message = check_form_user(request)
     if message:
-        return render_template('update_user.htm', message=message,
-                               user=request.form)
+        return_page = render_template('update_user.htm', message=message,
+                                      user=request.form)
+        return {'status': False, 'page': return_page}
     try:
         name = sanitize(request.form['name'])
         mail = sanitize(request.form['mail'])
@@ -107,14 +108,15 @@ def update_user(request, g, user=None):
         user.mail = mail
         user.password = password
         user.site = site
-        user.url = request.form['url']
+        user.url = request.form['url'].encode('utf-8')
         g.db_session.add(user)
         g.db_session.commit()
         session['user'] = user.id
-        return render_template('profile.htm', user=user)
+        return {'status': True}
     except:
         message = u'登録に失敗しました'
-        return render_template('error.htm', message=message, title=u'エラー')
+        return_page = render_template('error.htm', message=message, title=u'エラー')
+        return {'status': False, 'page': return_page}
 
 
 def check_form_novel(request):

@@ -1,28 +1,23 @@
-drop table if exists users;
-drop table if exists novels;
-drop table if exists tags;
+drop table if exists access_log;
+drop table if exists sites_log;
 
-create table users (
-    id integer primary key auto_increment,
-    name varchar(255) not null,
-    mail varchar(511) not null unique,
-    password varchar(255) not null,
-    site varchar(255) not null,
+create table access_log(
+    user_id integer default null,
+    date date not null,
+    ua varchar(255) not null,
+    ip varchar(15) not null,
+    refer varchar(255)  null,
+    link varchar(255),
+    constraint tag_key unique (date, ua, ip),
+    index refer(refer),
+    index link(refer)
 );
 
-create table novels(
-    id integer primary key auto_increment,
-    user_id integer not null,
-    title varchar(255) not null,
-    summary text not null,
-    index author (user_id)
-);
-
-create table tags(
-    id integer primary key auto_increment,
-    novel_id integer not null,
-    name varchar(255) not null,
-    lock tinyint(1) not null deafult 0
-    index tag (name),
-    index novel(novel_id)
+create table sites_log(
+    site_id integer unique,
+    total_in bigint not null default 0,
+    total_out bigint not null default 0,
+    monthly_in integer not null default 0,
+    monthly_out integer not null default 0,
+    index sites(site_id)
 );

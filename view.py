@@ -6,6 +6,7 @@ from db import User, Novel, Tag
 import util
 from urlparse import urljoin
 import hashlib
+import urllib2
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -38,7 +39,6 @@ def robots():
     if ROBOTS:
         return ROBOTS
     return page_not_found('')
-
 
 
 @app.route('/')
@@ -105,7 +105,12 @@ def user_index():
     if not user:
         message = u'未知のエラーです'
         return render_template('error.htm', message=message)
-    return render_template('profile.htm', user=user, novels=user.novel_list)
+    #print url_for('link_to_site', hoge=urllib2.quote(user.url))
+    print url_for('link_to_site', link='test')
+    return render_template('profile.htm',
+                           url=url_for('link_to_site',
+                                       link=urllib2.quote(user.url)),
+                           user=user, novels=user.novel_list)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -142,7 +147,10 @@ def signup():
 
 @app.route('/register', methods=['POST'])
 def register():
-    return util.update_user(request, g)
+    result = util.update_user(request, g)
+    if not result['status']:
+        return result['page']
+    return redirect(url_for('user_index'))
 
 
 @app.route('/user/edit_profile', methods=['GET', 'POST'])
@@ -156,7 +164,10 @@ def edit_profile():
         decode_user = util.decode_user(user)
         return render_template('update_user.htm', path=request.base_url,
                                user=decode_user)
-    return util.update_user(request, g, user)
+    result = util.update_user(request, g, user)
+    if not result['status']:
+        return result['page']
+    return redirect(url_for('user_index'))
 
 
 @app.route('/novel/<int:novel_id>')
@@ -196,3 +207,9 @@ def edit_novel(novel_id):
     if not result['status']:
         return result['page']
     return redirect(url_for('novelinfo', novel_id=result['id']))
+
+
+@app.route('/link')
+def link_to_site():
+    link = urllib2.unquote(request.args['link']).encode('utf-8')
+    return redirect(link)
