@@ -1,0 +1,13 @@
+{% extends "base.htm" %}
+{% block title %}検索結果{% endblock %}
+{% block content %}
+<div id="novelist">
+    {% for novel in novels %}
+<dl>
+    <dt>title</dt><dd>{{ novel.title }}</dd>
+    <dt>author</dt><dd>{{ novel.author.name }}</dd>
+    <dt>site</dt><dd><a href="{{ novel.author.url }}" target="_blank">{{ novel.author.site }}</a></dd>
+    <dt>summary</dt><dd>{{ novel.summary }}</dd>
+</div>
+    {% endfor %}
+{% endblock %}

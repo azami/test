@@ -10,7 +10,12 @@
         <dt>タイトル</dt>
         <dd><input type="text" value="{{ novel['title'] }}" name="title"></dd>
         <dt>タグ(半角スペースで区切ってください)</dt>
-        <dd> {{ forms.input('tags') }}</dd>
+        {% if tags %}
+        <dd><input type="text" value="{{ tags }}" name="tags"></dd>
+        {% else %}
+        <dd><input type="text" value="{{ novel['tags'] }}" name="tags"></dd>
+
+        {% endif%}
         <dt>あらすじ</dt>
         <dd><textarea name="summary" rows="5" cols="40">{{ novel['summary'] }}</textarea></dd>
         <dt> {{ forms.input('submit', type='submit', value='送信') }}</dt>

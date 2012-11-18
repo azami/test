@@ -1,5 +1,6 @@
 #-*- coding: utf-8 -*-
 from db import User, Novel, Tag
+from config import SHOW_MAX
 import urllib2
 import hashlib
 import unicodedata
@@ -16,7 +17,7 @@ def sanitize(string):
     string = string.replace('&', '&amp;')
     string = string.replace('"', '&quot;')
     string = string.replace('\x27', '&#39;')
-    return string
+    return string.strip()
 
 
 def sanitize_decode(string):
@@ -54,6 +55,21 @@ def exist_url(url):
         return False
     except:
         return False
+
+
+def search_result(page, results):
+    num = len(results)
+    start_num = page * SHOW_MAX
+    try:
+        if num > SHOW_MAX:
+            if start_num + SHOW_MAX < SHOW_MAX:
+                results = results[start_num:]
+            else:
+                results = results[start_result:start_result + SHOW_MAX]
+        return results
+    except:
+        return 
+
 
 def device(ua):
     if ua.find('au') >= 0 or ua.find('softbank') >= 0 or ua.find('docomo') >= 0:
@@ -131,14 +147,16 @@ def update_novel(request, g, novel=None):
     user_id = session['user']
     message = check_form_novel(request)
     if message:
-        return (False, render_template('update_novel.htm', message=message,
-                               title=u'エラー', novel=request.form))
+        return_page = render_template('update_novel.htm', message=message,
+                                      title=u'エラー', novel=request.form)
+        return {'status': False, 'page': return_page}
 
     try:
         title = sanitize(request.form['title'])
         summary = sanitize(request.form['summary'])
         tags = {}
-        for tag in re.sub(' \+', ' ', sanitize(request.form['tags'])).split(' '):
+        for tag in set(re.sub(' \+', ' ',
+                              sanitize(request.form['tags'])).split(' ')):
             tags[tag] = True
         if not novel:
             novel = Novel()
@@ -148,7 +166,9 @@ def update_novel(request, g, novel=None):
         g.db_session.add(novel)
         g.db_session.commit()
         update_tags(novel, tags, g)
-        return (True, novel.id)
+        return {'status': True, 'id': novel.id}
     except:
         message = u'登録に失敗しました'
-        return render_template('error.htm', message=message)
+        return_page = render_template('update_novel.htm', message=message,
+                                      title=u'エラー', novel=request.form)
+        return {'status': False, 'page': return_page}
