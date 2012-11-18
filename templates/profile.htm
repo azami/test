@@ -1,9 +1,18 @@
 {% extends "base.htm" %}
-{% block title %}signup{% endblock %}
+{% block title %}ようこそ{{ user.name }}さん。{% endblock %}
 {% block content %}
 ID: {{ user.id }}<br/>
 name: {{ user.name }}<br/>
 mail: {{ user.mail }}<br/>
 site: {{ user.site }}<br/>
 url:  {{ user.url }}<br/>
+
+<br/>
+<br/>
+{% for novel in novels %}
+title: {{ novel.title }}<br/>
+summary: {{ novel.summary }}<br/>
+<br/>
+{% endfor %}
+
 {% endblock %}

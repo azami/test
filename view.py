@@ -29,14 +29,15 @@ def index():
     return render_template('index.htm', config=g.config)
 
 
-@app.route('/user/<int:user_id>')
+@app.route('/user')
 @require_login
-def user_index(user_id):
-    user = g.db_session.query(User).filter(User.id == user_id).first()
+def user_index():
+    user = g.db_session.query(User).filter(User.id == session['user']).first()
     if not user:
         message = u'未知のエラーです'
         return render_template('error.htm', message=message)
-    return render_template('profile.htm', user=user)
+    print type(user.novels[0].title)
+    return render_template('profile.htm', user=user, novels=user.novel_list)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -52,8 +53,7 @@ def login():
         if user.password == hashlib.md5(request.form['password']).hexdigest():
             session['user'] = user.id
             g.user = user
-            print url_for('user_index', user_id=user.id)
-            return redirect(url_for('user_index', user_id=user.id))
+            return redirect(url_for('user_index'))
     g.config['message'] = u'メールアドレスまたはパスワードが違います'
     return render_template('error.htm', conf=g.config)
 
@@ -77,41 +77,52 @@ def register():
     return util.update_user(request, g)
 
 
-@app.route('/user/<int:user_id>/edit_profile', methods=['GET', 'POST'])
+@app.route('/user/edit_profile', methods=['GET', 'POST'])
 @require_login
-def edit_profile(user_id):
+def edit_profile():
+    user = g.db_session.query(User).filter(User.id == session['user']).first()
+    if not user:
+        message = u'未知のエラーです'
+        return render_template('error.htm', message=message)
     if request.method == 'GET':
-        user = g.db_session.query(User).filter(User.id == user_id).first()
-        if not user:
-            message = u'未知のエラーです'
-            return render_template('error.htm', message=message)
+        decode_user = util.decode_user(user)
         return render_template('update_user.htm', path=request.base_url,
-                               user=user)
-    return util.update_user(request, g, user_id)
+                               user=decode_user)
+    return util.update_user(request, g, user)
+
+
+@app.route('/novel/<int:novel_id>')
+def novelinfo(novel_id):
+    novel = g.db_session.query(Novel).filter(Novel.id == novel_id).one()
+    return render_template('novel.htm', novel=novel)
 
 
 @require_login
-@app.route('/user/<int:user_id>/add_novel', methods=['GET', 'POST'])
-def add_novel(user_id):
+@app.route('/user/add_novel', methods=['GET', 'POST'])
+def add_novel():
     if request.method == 'GET':
-        return render_template('add_novel.htm', conf=None)
+        return render_template('update_novel.htm', title=u'小説登録',
+                               novel=None)
+    (result, return_code) = util.update_novel(request, g)
+    if not result:
+        return return_code
+    return redirect(url_for('novelinfo', novel_id=return_code))
 
-#    try:
-    user_id = user_id
-    if not request.form['title'] or not request.form['summary']:
-        g.config['message'] = u'未入力の項目があります'
-        return render_template('add_novel.htm', conf=g.config)
 
-    title = util.sanitize(request.form['title'])
-    summary = util.sanitize(request.form['summary'])
-    novel = Novel(user_id=user_id,
-                   title=title,
-                   summary=summary)
-    g.db_session.add(novel)
-    g.db_session.commit()
-    print g.db_session.query(Novel).all()
-    return 'touroku'
-    return render_template('novel.htm', app.config)
-#    except:
-#        return 'error'
-#        return render_template('error.htm', app.config)
+@require_login
+@app.route('/user/edit_novel/<int:novel_id>', methods=['GET', 'POST'])
+def edit_novel(novel_id):
+    novel = g.db_session.query(Novel).filter(Novel.user_id == session['user'],
+                                             Novel.id == novel_id).first()
+    if not novel:
+        message = u'未知のエラーです'
+        return render_template('error.htm', message=message)
+
+    if request.method == 'GET':
+        decode_novel = util.decode_novel(novel)
+        return render_template('update_novel.htm', title=u'小説情報編集',
+                               novel=decode_novel)
+    (result, return_code) = util.update_novel(request, g, novel)
+    if not result:
+        return return_code
+    return redirect(url_for('novelinfo', novel_id=return_code))

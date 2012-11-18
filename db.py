@@ -9,7 +9,7 @@ from config import db_config
 
 def create_dbengine(config):
     print config['database']
-    return create_engine('%s://%s:%s@localhost/%s' %
+    return create_engine('%s://%s:%s@localhost/%s?charset=utf8' %
                          (config['db_connect'],
                           config['db_user'],
                           config['db_password'],
@@ -65,4 +65,4 @@ class Tag(Base):
     novel = relationship(Novel, backref='tags')
 
     def __repr__(self):
-        return '<Tag: id:%s>' % self.id
+        return '<Tag: novel_id:%s tag: %s>' % (self.novel_id, self.tag)
