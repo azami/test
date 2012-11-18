@@ -188,8 +188,8 @@ def add_novel():
     return redirect(url_for('novelinfo', novel_id=return_code))
 
 
-@require_login
 @app.route('/user/edit_novel/<int:novel_id>', methods=['GET', 'POST'])
+@require_login
 def edit_novel(novel_id):
     novel = g.db_session.query(Novel).filter(Novel.user_id == session['user'],
                                              Novel.id == novel_id).first()
@@ -207,6 +207,40 @@ def edit_novel(novel_id):
     if not result['status']:
         return result['page']
     return redirect(url_for('novelinfo', novel_id=result['id']))
+
+
+
+@app.route('/user/quit')
+@require_login
+def quit():
+    user = g.db_session.query(User).filter(User.id == session['user']).first()
+    if not user:
+        message = u'未知のエラーです'
+        return internal_server_error(message)
+    for novel in user.novel_list:
+        for tag in novel.tag_list:
+            tag.status = False
+        novel.status = False
+    user.status = False
+    g.db_session.add(user)
+    g.db_session.commit()
+    return redirect(url_for('logout'))
+
+
+@app.route('/user/delete_novel/<int:novel_id>')
+@require_login
+def delete_novel(novel_id):
+    novel = g.db_session.query(Novel).filter(Novel.user_id == session['user'],
+                                             Novel.id == novel_id).first()
+    if not novel:
+        message = u'未知のエラーです'
+        return internal_server_error(message)
+    for tag in novel.tag_list:
+        tag.status = False
+    novel.status = False
+    g.db_session.add(novel)
+    g.db_session.commit()
+    return redirect(url_for('user_index'))
 
 
 @app.route('/link')
