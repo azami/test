@@ -1,9 +1,11 @@
 #-*- coding: utf-8 -*-
 from db import User, Novel, Tag
+from log_db import InLog, OutLog, NovelLog
 from config import SHOW_MAX
 import urllib2
 import hashlib
 import unicodedata
+import datetime
 import re
 from flask import redirect, render_template, session
 
@@ -95,7 +97,7 @@ def update_user(request, g, user=None):
     message = check_form_user(request)
     if message:
         return_page = render_template('update_user.htm', message=message,
-                                      user=request.form)
+                                      user=request.form, conf=g.config)
         return {'status': False, 'page': return_page}
     try:
         name = sanitize(request.form['name'])
@@ -115,7 +117,8 @@ def update_user(request, g, user=None):
         return {'status': True}
     except:
         message = u'登録に失敗しました'
-        return_page = render_template('error.htm', message=message, title=u'エラー')
+        return_page = render_template('error.htm', message=message, title=u'エラー',
+                                      conf=g.config)
         return {'status': False, 'page': return_page}
 
 
@@ -150,7 +153,8 @@ def update_novel(request, g, novel=None):
     message = check_form_novel(request)
     if message:
         return_page = render_template('update_novel.htm', message=message,
-                                      title=u'エラー', novel=request.form)
+                                      title=u'エラー', novel=request.form,
+                                      conf=g.config)
         return {'status': False, 'page': return_page}
 
     try:
@@ -172,5 +176,58 @@ def update_novel(request, g, novel=None):
     except:
         message = u'登録に失敗しました'
         return_page = render_template('update_novel.htm', message=message,
-                                      title=u'エラー', novel=request.form)
+                                      title=u'エラー', novel=request.form,
+                                      conf=g.config)
         return {'status': False, 'page': return_page}
+
+
+def logging_in(g, request):
+    ua = request.headers['User-Agent']
+    refer = request.headers.get('Referer')
+    if not refer.startswith(request.url_root):
+        log = g.logdb_session.query(InLog).\
+                filter(InLog.ua == ua).\
+                filter(InLog.date == datetime.date.today()).\
+                filter(InLog.ip == request.remote_addr).\
+                filter(InLog.refer == refer).first()
+        if not log:
+            log = InLog()
+            if 'user' in session:
+                log.user_id = session['user']
+            log.date = datetime.date.today()
+            log.ua = ua
+            log.ip = request.remote_addr
+            log.refer = refer
+            g.logdb_session.add(log)
+            g.logdb_session.commit()
+
+
+def logging_out(g, request, url, novel_id):
+    ua = request.headers['User-Agent']
+    refer = request.headers.get('Referer')
+    user_id = 0
+    if 'user' in session:
+        user_id = session['user']
+        user = g.db_session(User).query.filter(User.id == user_id).one()
+        if novel_id in [novel.id for novel in user.novel_list]:
+            return
+        outlog = g.logdb_session(OutLog).query.filter(OutLog.ua == ua).\
+                filter(OutLog.ip == request.remote_addr).\
+                filter(OutLog.date == datetime.datetime.today()).\
+                filter(OutLog.novel_id == novel_id).first()
+        if outlog:
+            return
+        outlog = OutLog()
+        outlog.ua = ua
+        outlog.ip = request.remote_addr
+        outlog.date = datetime.datetime.today()
+        outlog.novel_id = novel_id
+        outlog.url = url
+        outlog.refer = refer
+        if user_id:
+            outlog.user_id = user_id
+        novellog = session.query(NovelLog).filter(NovelLog.novel_id == novel_id)
+        novellog.totai_out += 1
+        novellog.monthly_out += 1
+        g.logdb_session.add_all([outlog, novellog])
+        g.logdb_session.commit()

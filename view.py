@@ -24,14 +24,20 @@ def require_login(func):
     return wrapper
 
 
+def link_site_url(url, id=0):
+    if id:
+        return url_for('link_to_site', id=site_id, to=urllib2.quote(url))
+    return url_for('link_to_site', to=urllib2.quote(url))
+
+
 @app.errorhandler(404)
 def page_not_found(error):
-    return render_template('error.htm', message=error), 404
+    return render_template('error.htm', message=error, conf=g.config), 404
 
 
 @app.errorhandler(500)
 def internal_server_error(error):
-    return render_template('error.htm', message=error), 500
+    return render_template('error.htm', message=error, conf=g.config), 500
 
 
 @app.route('/robots.txt')
@@ -56,7 +62,7 @@ def index():
         print int(len(tag_list) // tag_list.count(tag))
         tags[tag]= {'size': int(len(tag_list) // tag_list.count(tag)),
                     'num': tag_list.count(tag)}
-    return render_template('index.htm', tags=tags)
+    return render_template('index.htm', tags=tags, conf=g.config)
 
 
 @app.route('/tag/<tag>')
@@ -69,7 +75,7 @@ def tag_search(tag, page=0):
         return page_not_found(u'検索結果がないです')
     novels = [tag.novel for tag in tags if tag.novel.status]
     novels = sorted(novels, key=lambda x: x.id)
-    return render_template('search.htm', novels=novels)
+    return render_template('search.htm', novels=novels, conf=g.config)
 
 
 @app.route('/search')
@@ -95,7 +101,7 @@ def search(page=0):
     novels = sorted(util.search_result(page, set(novels)), key=lambda x: x.id)
     if not novels:
         return page_not_found(u'検索結果がないです')
-    return render_template('search.htm', novels=novels)
+    return render_template('search.htm', novels=novels, conf=g.config)
     
 
 @app.route('/user')
@@ -104,13 +110,10 @@ def user_index():
     user = g.db_session.query(User).filter(User.id == session['user']).first()
     if not user:
         message = u'未知のエラーです'
-        return render_template('error.htm', message=message)
-    #print url_for('link_to_site', hoge=urllib2.quote(user.url))
-    print url_for('link_to_site', link='test')
+        return render_template('error.htm', message=message, conf=g.config)
     return render_template('profile.htm',
-                           url=url_for('link_to_site',
-                                       link=urllib2.quote(user.url)),
-                           user=user, novels=user.novel_list)
+                           url=link_site_url(user.url),
+                           user=user, novels=user.novel_list, conf=g.config)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -142,7 +145,7 @@ def signup():
     path = urljoin(request.url_root, url_for('register'))
     if not app.debug:
         path = request.url_root.replace('http://', 'https://', 1)
-    return render_template('update_user.htm', path=path, user=None)
+    return render_template('update_user.htm', path=path, user=None, conf=g.config)
 
 
 @app.route('/register', methods=['POST'])
@@ -163,7 +166,7 @@ def edit_profile():
     if request.method == 'GET':
         decode_user = util.decode_user(user)
         return render_template('update_user.htm', path=request.base_url,
-                               user=decode_user)
+                               user=decode_user, conf=g.config)
     result = util.update_user(request, g, user)
     if not result['status']:
         return result['page']
@@ -173,7 +176,7 @@ def edit_profile():
 @app.route('/novel/<int:novel_id>')
 def novelinfo(novel_id):
     novel = g.db_session.query(Novel).filter(Novel.id == novel_id).one()
-    return render_template('novel.htm', novel=novel)
+    return render_template('novel.htm', novel=novel, conf=g.config)
 
 
 @require_login
@@ -181,7 +184,7 @@ def novelinfo(novel_id):
 def add_novel():
     if request.method == 'GET':
         return render_template('update_novel.htm', title=u'小説登録',
-                               novel=None)
+                               novel=None, conf=g.config)
     (result, return_code) = util.update_novel(request, g)
     if not result:
         return return_code
@@ -202,7 +205,8 @@ def edit_novel(novel_id):
         decode_novel = util.decode_novel(novel)
         decode_tags = [util.sanitize_decode(tag) for tag in tags]
         return render_template('update_novel.htm', title=u'小説情報編集',
-                               novel=decode_novel, tags=' '.join(decode_tags))
+                               novel=decode_novel, tags=' '.join(decode_tags),
+                               conf=g.config)
     result = util.update_novel(request, g, novel)
     if not result['status']:
         return result['page']
@@ -244,6 +248,9 @@ def delete_novel(novel_id):
 
 
 @app.route('/link')
-def link_to_site():
-    link = urllib2.unquote(request.args['link']).encode('utf-8')
-    return redirect(link)
+@app.route('/link/<int:id>')
+def link_to_site(id=0, tag=None):
+    to = request.args.get('to')
+    if id:
+        util.logging_out(g, request, to, id)
+    return redirect(urllib2.unquote(to))

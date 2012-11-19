@@ -4,6 +4,7 @@ from view import app
 from flask import g, request, session
 from config import db_config
 import db
+import log_db
 import util
 
 app.debug = True
@@ -16,14 +17,14 @@ def before_request():
     if request.args.get('ad') == 'shine':
         g.config['adfree'] = True
     g.db_session = db.Session(bind=db.engine)
-
+    g.logdb_session = db.Session(bind=log_db.engine)
+    util.logging_in(g, request)
+    
 
 @app.teardown_request
 def teardown_request(exception):
     g.db_session.close()
-    if 'user' in session:
-        pass
-        #session.save_session(app, session, response)
+    g.logdb_session.close()
 
 if __name__ == '__main__':
     app.run()
