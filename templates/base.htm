@@ -3,21 +3,43 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     {% block head %}
-    <link rel="stylesheet" href="style.css" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /> 
+    <link rel="stylesheet" href="{{ conf.device }}.css" />
     <title>{% block title %}{% endblock %}たぐさーち</title>
     {% endblock %}
-</head>
+  </head>
 <body>
-    <div id="header">
-        {% block header %}
-            {% if not config['adfree'] %}
-            {% endif %}
-        {% endblock %}
-    </div>
-    <div id="content">{% block content %}{% endblock %}</div>
-    <div id="footer">
-        {% block footer %}
-        Copyright 2012 by <a href="{{ host }}">tag search</a>.
-        {% endblock %}
-    </div>
+   <div class="header">
+     {% block header %}
+       {% if 'user' in session %}
+         <div id="usermenue">
+           <a href="/user" target="_top">USERPAGE</a>
+           <a href="/logout" target="_top">LOGOUT</a>
+         </div>
+       {% else %}
+         <div id="nouser">
+           {% if conf['device'] == 'mobile' %}
+             <a href="/signup" target="_top">SIGNUP</a>
+             <a href="/login" target="_top">LOGIN</a>
+           {% else %}
+             <a href="/signup" target="_top">SIGNUP</a>
+             <a href="/login" target="_top">LOGIN</a>
+           {% endif %}
+         </div>
+       {% endif %}
+           {% if not 'adfree' in conf %}
+              ad
+           {% endif %}
+     {% endblock %}
+   </div>
+   <div class="content">{% block content %}{% endblock %}</div>
+   <div class="footer">
+     {% block footer %}
+       {% if not 'adfree' in  conf %}
+         ad
+       {% endif %}
+        <hr/>
+        <div id="copyright">Copyright 2012 by <a href="{{ host }}">tag search</a>.</div>
+       {% endblock %}
+   </div>
 </body>

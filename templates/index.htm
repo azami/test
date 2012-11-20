@@ -1,15 +1,9 @@
-{% extends "base.htm" %}
+{% extends "search.htm" %}
 {% block title %}たぐさーち{% endblock %}
-{% block content %}
-<div id="search">
-{% import 'forms.htm' as forms %}
-<form action='/search' method='get'/>
-{{ forms.input('words') }}{{ forms.input('', type='submit', value='検索') }}
-</form>
-</div>
-<div id="tags">
-{% for tag in tags  %}
-    <a id="tag{{ tags[tag]['size'] }}" href="/tag/{{ tag }}" target="_top">{{ tag }}</a> 
-{% endfor %}
-</div>
+{% block searchpage %}
+  <div class="tags">
+    {% for tag in tags  %}
+      <a id="tag{{ tags[tag]['size'] }}" href="/tag/{{ tag }}" target="_top">{{ tag }}</a> 
+    {% endfor %}
+  </div>
 {% endblock %}

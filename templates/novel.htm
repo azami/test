@@ -1,6 +1,10 @@
 {% extends "base.htm" %}
-{% block title %}{{ novel.title }}{% endblock %}
+{% block title %}小説情報{% endblock %}
 {% block content %}
-title: {{ novel.title }}<br/>
-summary: {{ novel.summary }}<br/>
+  {% block novel %}
+    <div class="novel">
+      {% from 'util.htm' import dump_novel_info as novel_info %}
+      {{ novel_info(novel) }}
+    </div>
+  {% endblock %}
 {% endblock %}

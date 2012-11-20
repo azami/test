@@ -19,8 +19,10 @@ create table novels (
     title varchar(255) not null,
     summary text not null,
     tag_edit smallint(1) not null default 1,
+    banned_tags varchar(255) default null,
     status smallint(1) not null default 1,
     foreign key (user_id) references users(id),
+    constraint user_novel unique (user_id, title),
     index author (user_id)
 );
 

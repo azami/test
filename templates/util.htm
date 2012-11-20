@@ -1,0 +1,18 @@
+{% macro dump_novel_info(novel) -%}
+  <dl>
+    <dt> title </dt>
+    <dd>{{ novel.title }}</dd>
+    <dt> site </dt>
+    <dd><a href="{{ novel.url }}" target="_blank">{{ novel.author.site }}</a></dd>
+    <dt> author </dt>
+    <dd>{{ novel.author.name }}</dd>
+    <dt> tags </dt>
+    <dd>
+      {% for tag in novel.tag_list %}
+        <a href="{{ tag.url }}" target="_top">{{ tag.tag }}</a>
+      {% endfor %}
+    </dd> 
+    <dt> summary</dt>
+    <dd>{{ novel.summary }}</dd>
+  </dl>
+{%- endmacro %}

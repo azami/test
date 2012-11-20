@@ -1,15 +1,17 @@
 #-*- coding: utf-8 -*-
 from db import User, Novel, Tag
-from log_db import InLog, OutLog, NovelLog
+from log_db import InLog, OutLog, UserLog, NovelLog
 from config import SHOW_MAX
 import urllib2
 import hashlib
 import unicodedata
 import datetime
 import re
+import threading
 from flask import redirect, render_template, session
 
 AGENT = 'tag_search_agent'
+MOBAGENT = 'Mozilla/5.0 (iPhone; CPU iPhone OS 5_0 like Mac OS X) AppleWebKit/534.46 (KHTML, like Gecko) Version/5.1 Mobile/9A334 Safari/7534.48.3'
 
 
 def sanitize(string):
@@ -48,14 +50,19 @@ def decode_novel(novel):
 def exist_url(url):
     if not url.startswith('http://') and not url.startswith('https://'):
         return False
-    req = urllib2.Request(url)
-    req.add_header('User-Agent', AGENT)
+    agentreq = urllib2.Request(url)
+    agentreq.add_header('User-Agent', AGENT)
+    mobagentreq = urllib2.Request(url)
+    mobagentreq.add_header('User-Agent', MOBAGENT)
+    ### TODO
     try:
+        for req in (agentreq, mobagentreq):
+            t = threading.Thread(target=urllib2.urlopen(req))
         response = urllib2.urlopen(req)
         if response.code == 200:
             return True
-        return False
-    except:
+        return True
+    except Exception, e:
         return False
 
 
@@ -181,10 +188,10 @@ def update_novel(request, g, novel=None):
         return {'status': False, 'page': return_page}
 
 
-def logging_in(g, request):
+def logging_in(g, request, user_id=0):
     ua = request.headers['User-Agent']
     refer = request.headers.get('Referer')
-    if not refer.startswith(request.url_root):
+    if refer and not refer.startswith(request.url_root):
         log = g.logdb_session.query(InLog).\
                 filter(InLog.ua == ua).\
                 filter(InLog.date == datetime.date.today()).\
@@ -199,8 +206,23 @@ def logging_in(g, request):
             log.ip = request.remote_addr
             log.refer = refer
             g.logdb_session.add(log)
+            if user_id:
+                user = g.db_session.query(User).filter(User.id == user_id).first()
+                if not user:
+                    return
+                if user.id == user_id:
+                    return
+                if refer.startswith(user.url):
+                    return
+                user_log = g.logdb_session.query(UserLog).\
+                        filter(UserLog.user_id == User.id).first()
+                if not user_log:
+                    user_log = UserLog(user_id=User.id)
+                user_log.total_in += 1
+                user_log.monthly_in += 1
+                g.logdb_session.add(user_log)               
             g.logdb_session.commit()
-
+                
 
 def logging_out(g, request, url, novel_id):
     ua = request.headers['User-Agent']
@@ -211,23 +233,24 @@ def logging_out(g, request, url, novel_id):
         user = g.db_session(User).query.filter(User.id == user_id).one()
         if novel_id in [novel.id for novel in user.novel_list]:
             return
-        outlog = g.logdb_session(OutLog).query.filter(OutLog.ua == ua).\
-                filter(OutLog.ip == request.remote_addr).\
-                filter(OutLog.date == datetime.datetime.today()).\
-                filter(OutLog.novel_id == novel_id).first()
-        if outlog:
-            return
-        outlog = OutLog()
-        outlog.ua = ua
-        outlog.ip = request.remote_addr
-        outlog.date = datetime.datetime.today()
-        outlog.novel_id = novel_id
-        outlog.url = url
-        outlog.refer = refer
-        if user_id:
-            outlog.user_id = user_id
-        novellog = session.query(NovelLog).filter(NovelLog.novel_id == novel_id)
-        novellog.totai_out += 1
-        novellog.monthly_out += 1
-        g.logdb_session.add_all([outlog, novellog])
-        g.logdb_session.commit()
+    outlog = g.logdb_session(OutLog).query.filter(OutLog.ua == ua).\
+            filter(OutLog.ip == request.remote_addr).\
+            filter(OutLog.date == datetime.datetime.today()).\
+            filter(OutLog.novel_id == novel_id).first()
+    if outlog:
+        return
+    outlog = OutLog()
+    outlog.ua = ua
+    outlog.ip = request.remote_addr
+    outlog.date = datetime.datetime.today()
+    outlog.novel_id = novel_id
+    outlog.url = url
+    if user_id:
+        outlog.user_id = user_id
+    novellog = session.query(NovelLog).filter(NovelLog.novel_id == novel_id)
+    if not novellog:
+        novellog = NovelLog(novel_id=novel_id)
+    novellog.totai_out += 1
+    novellog.monthly_out += 1
+    g.logdb_session.add_all([outlog, novellog])
+    g.logdb_session.commit()

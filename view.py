@@ -24,12 +24,6 @@ def require_login(func):
     return wrapper
 
 
-def link_site_url(url, id=0):
-    if id:
-        return url_for('link_to_site', id=site_id, to=urllib2.quote(url))
-    return url_for('link_to_site', to=urllib2.quote(url))
-
-
 @app.errorhandler(404)
 def page_not_found(error):
     return render_template('error.htm', message=error, conf=g.config), 404
@@ -58,8 +52,6 @@ def index():
     tags={}
     print len(tag_list)
     for tag in sorted_tag:
-        print tag_list.count(tag)
-        print int(len(tag_list) // tag_list.count(tag))
         tags[tag]= {'size': int(len(tag_list) // tag_list.count(tag)),
                     'num': tag_list.count(tag)}
     return render_template('index.htm', tags=tags, conf=g.config)
@@ -111,9 +103,8 @@ def user_index():
     if not user:
         message = u'未知のエラーです'
         return render_template('error.htm', message=message, conf=g.config)
-    return render_template('profile.htm',
-                           url=link_site_url(user.url),
-                           user=user, novels=user.novel_list, conf=g.config)
+    return render_template('profile.htm', user=user,
+                           novels=user.novel_list, conf=g.config)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -130,8 +121,8 @@ def login():
             session['user'] = user.id
             g.user = user
             return redirect(url_for('user_index'))
-    g.config['message'] = u'メールアドレスまたはパスワードが違います'
-    return render_template('error.htm', conf=g.config)
+    message = u'メールアドレスまたはパスワードが違います'
+    return render_template('login.htm', message=message, conf=g.config)
 
 
 @app.route('/logout')
@@ -185,10 +176,10 @@ def add_novel():
     if request.method == 'GET':
         return render_template('update_novel.htm', title=u'小説登録',
                                novel=None, conf=g.config)
-    (result, return_code) = util.update_novel(request, g)
-    if not result:
-        return return_code
-    return redirect(url_for('novelinfo', novel_id=return_code))
+    result = util.update_novel(request, g)
+    if not result['status']:
+        return result['page']
+    return redirect(url_for('novelinfo', novel_id=result['id']))
 
 
 @app.route('/user/edit_novel/<int:novel_id>', methods=['GET', 'POST'])

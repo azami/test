@@ -18,7 +18,8 @@ def before_request():
         g.config['adfree'] = True
     g.db_session = db.Session(bind=db.engine)
     g.logdb_session = db.Session(bind=log_db.engine)
-    util.logging_in(g, request)
+    user_id = request.args.get('linkid')
+    util.logging_in(g, request, user_id)
     
 
 @app.teardown_request
