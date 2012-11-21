@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 
 from flask import Flask, request, g, render_template, url_for, session, redirect
-from config import Config, ROBOTS
+from config import Config, ROBOTS, LINKPATH
 from db import User, Novel, Tag
 import util
 from urlparse import urljoin
 import hashlib
 import urllib2
+import datetime
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -216,6 +217,7 @@ def quit():
         for tag in novel.tag_list:
             tag.status = False
         novel.status = False
+    user.mail += '+quit+%s' % datetime.date.today()
     user.status = False
     g.db_session.add(user)
     g.db_session.commit()
@@ -238,8 +240,8 @@ def delete_novel(novel_id):
     return redirect(url_for('user_index'))
 
 
-@app.route('/link')
-@app.route('/link/<int:id>')
+@app.route(LINKPATH)
+@app.route(LINKPATH + '/<int:id>')
 def link_to_site(id=0, tag=None):
     to = request.args.get('to')
     if id:

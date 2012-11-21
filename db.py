@@ -1,11 +1,15 @@
 # -:- coding: utf-8 -*-
 
-from sqlalchemy import Column, Integer, String, Boolean, TEXT, \
+from sqlalchemy import Column, Integer, String, Boolean, TEXT, DateTime, TIMESTAMP,\
         UniqueConstraint, ForeignKey, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker, scoped_session
-from config import db_config
+from config import db_config, LINKPATH
 import urllib
+import datetime
+
+
+MAXLEN = 200
 
 
 def create_dbengine(config):
@@ -49,8 +53,9 @@ class Novel(Base):
     title = Column(String, nullable=False)
     summary = Column(TEXT, nullable=False)
     tag_edit = Column(Boolean, nullable=False, default=True)
-    banned_tags = Column(String, default=None)
     status = Column(Boolean, nullable=False, default=True)
+    created = Column(DateTime, nullable=False, default=datetime.datetime.utcnow())
+    updated = Column(TIMESTAMP, nullable=False)
     tag_list = relationship('Tag', order_by='Tag.tag', backref='novels',
                             lazy='joined')
     author = relationship(User, backref='novels', lazy='joined')
@@ -58,8 +63,13 @@ class Novel(Base):
 
     @property
     def url(self):
-        return urllib.urlencode({'id': self.id,
-                                 'to': self.author.quoteurl})
+        return LINKPATH + '?' + urllib.urlencode({'id': self.id,
+                                                  'to': self.author.quoteurl})
+
+    @property
+    def shortsummary(self):
+        if len(summary) > MAXLEN:
+            return summary[:MAXLEN] + '……'
 
     def __repr__(self):
         return '<Novels: id:%s>' % self.id

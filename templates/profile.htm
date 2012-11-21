@@ -1,6 +1,12 @@
 {% extends "base.htm" %}
 {% block title %}ようこそ{{ user.name }}さん。{% endblock %}
 {% block content %}
+  {% block user_header %}
+    <div id="usermenue">
+    <a href="./add_novel" target"_top">小説追加</a>
+    <a href="./add_novel" target"_top">ユーザー情報編集</a>
+    </div>
+  {% endblock %}
   <div class="user"/>
     ID: {{ user.id }}<br/>
     name: {{ user.name }}<br/>
