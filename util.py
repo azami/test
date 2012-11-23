@@ -20,37 +20,9 @@ def generate_cookie():
     return base64.b64encode(uuid.uuid4().bytes)
 
 
-def sanitize(string):
+def encode_string(string):
     string = unicodedata.normalize('NFKC', string)
-    string = string.replace('<', '&lt;')
-    string = string.replace('>', '&gt;')
-    string = string.replace('&', '&amp;')
-    string = string.replace('"', '&quot;')
-    string = string.replace('\x27', '&#39;')
     return string.strip()
-
-
-def sanitize_decode(string):
-    string = string.replace('&lt;', '<')
-    string = string.replace('&gt;', '>')
-    string = string.replace('&amp;', '&')
-    string = string.replace('&quot;', '"')
-    string = string.replace('&#39;', '\x27')
-    return string
-
-
-def decode_user(user):
-    decode_u = User()
-    decode_u.name = sanitize_decode(user.name)
-    decode_u.site = sanitize_decode(user.site)
-    return user
-
-
-def decode_novel(novel):
-    decode_n = Novel()
-    decode_n.title = sanitize_decode(novel.title)
-    decode_n.summary = sanitize_decode(novel.summary)
-    return decode_n
 
 
 def exist_url(url):
@@ -113,10 +85,10 @@ def update_user(request, g, user=None):
                                       user=request.form, conf=g.config)
         return {'status': False, 'page': return_page}
     try:
-        name = sanitize(request.form['name'])
-        mail = sanitize(request.form['mail'])
+        name = encode_string(request.form['name'])
+        mail = encode_string(request.form['mail'])
         password = hashlib.md5(request.form['password']).hexdigest()
-        site = sanitize(request.form['site'])
+        site = encode_string(request.form['site'])
         if not user:
             user = User()
         user.name = name
@@ -171,17 +143,21 @@ def update_novel(request, g, novel=None):
         return {'status': False, 'page': return_page}
 
     try:
-        title = sanitize(request.form['title'])
-        summary = sanitize(request.form['summary'])
+        title = encode_string(request.form['title'])
+        summary = encode_string(request.form['summary'])
         tags = {}
         for tag in set(re.sub(' \+', ' ',
-                              sanitize(request.form['tags'])).split(' ')):
+                       encode_string(request.form['tags'])).split(' ')):
             tags[tag] = True
         if not novel:
-            novel = Novel()
+            novel = g.db_session.query(Novel).filter(Novel.user_id == user_id).\
+                filter(Novel.title == title).filter(Novel.status == False).first()
+            if not novel:
+                novel = Novel()
         novel.user_id = user_id
         novel.title = title
         novel.summary = summary
+        novel.status = True
         g.db_session.add(novel)
         g.db_session.commit()
         update_tags(novel, tags, g)
@@ -191,7 +167,25 @@ def update_novel(request, g, novel=None):
         return_page = render_template('update_novel.htm', message=message,
                                       title=u'エラー', novel=request.form,
                                       conf=g.config)
-        return {'status': False, 'page': return_page}
+#        return {'status': False, 'page': return_page}
+
+
+def delete_user(user_id, reason):
+    try:
+        user = g.db_session.query(User).filter(User.id == user_id).first()
+        if not user:
+            message = u'未知のエラーです'
+            return internal_server_error(message)
+        for novel in user.novel_list:
+            for tag in novel.tag_list:
+                tag.status = False
+            novel.status = False
+        user.mail += '+' + reason + datetime.date.today()
+        user.status = False
+        g.db_session.add(user)
+        g.db_session.commit()
+    except:
+        pass
 
 
 def logging_in(g, request, user_id=0):

@@ -1,12 +1,11 @@
 {% macro input(name, value='', id='', type='text') -%}
-<input type="{{ type }}" value="{{ value|e }}" id="{{ value|e }}" name="{{ name }}"/>
+<input type="{{ type }}" value="{{ value|e }}" id="{{ id|e }}" name="{{ name }}"/>
 {%- endmacro %}
 
-{% macro linkbutton(url, text) -%}
-<button onclick="window.location.href='{{ url }}'"/>{{ text }}</button>
+{% macro linkbutton(url, text, icon) -%}
+<button type="button" onclick="window.location.href='{{ url }}'"/><i class="{{ icon }}"></i> {{ text }}</button>
 {%- endmacro %}
 
 {%- macro textarea(name, value='', rows=10, cols=40) -%}
-    <textarea name="{{ name }}" rows="{{ rows }}" cols="{{ cols
-        }}">{{ value|e }}</textarea>
+    <textarea name="{{ name }}" rows="{{ rows }}" cols="{{ cols }}">{{ value|e }}</textarea>
 {%- endmacro %}

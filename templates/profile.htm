@@ -1,26 +1,69 @@
 {% extends "base.htm" %}
 {% block title %}ようこそ{{ user.name }}さん。{% endblock %}
 {% block content %}
-  {% block user_header %}
-    <div id="usermenue">
-    <a href="./add_novel" target"_top">小説追加</a>
-    <a href="./add_novel" target"_top">ユーザー情報編集</a>
+{% block user_header %}
+{% endblock %}
+<div class="user"/>
+    <h2>profile</h2>
+    <dl>
+        <dt><i class="icon-user"></i></dt>
+        <dd>{{ user.name }}</dd>
+        <dt><i class="icon-envelope"></i></dt>
+        <dd>{{ user.mail }}</dd>
+        <dt><i class="icon-external-link"></i></dt>
+        <dd>{{ user.site }} <a href="{{ url }}" target="_top">{{ user.url }}</a></dd>
+    </dl>
+    <div id="usermenu">
+        {{ forms.linkbutton(url_for('add_novel'), "ADD NOVEL", "icon-plus") }}
+        {{ forms.linkbutton(url_for('edit_profile'), "EDIT PROFILE", "icon-edit") }}
     </div>
-  {% endblock %}
-  <div class="user"/>
-    ID: {{ user.id }}<br/>
-    name: {{ user.name }}<br/>
-    mail: {{ user.mail }}<br/>
-    site: {{ user.site }}<br/>
-    url:  <a href="{{ url }}" target="_top">{{ user.url }}</a><br/>
-  </div>
-  <br/>
-  <br/>
-  <div class="novel">
+</div><!--end of user-->
+<div class="novel">
+    <h2>novel</h2>
     {% for novel in novels %}
-      title: {{ novel.title }}<br/>
-      summary: {{ novel.summary }}<br/>
-      tag: {% for tag in novel.tag_list %}{{ tag.tag }} {% endfor %}<br/>
+    {% if novel.status %}
+    <script type="text/javascript">
+        $("#noveltag{{ novel.id }}").click(function(){
+                alert('test');
+            $("#tagedit{{ novel.id }}").toggle();
+        });
+    </script>
+    <dl>
+        <dt><i class="icon-book"></i></dt>
+        <dd>{{ novel.title }}</dd>
+        <dt><i class="icon-tags"></i> <a id="noveltag{{ novel.id }}" href="#"><i class="icon-wrench"></i></a></dt>
+        <dd>{% for tag in novel.tag_list %}{{ tag.tag }} {% endfor %}
+            <div class="tagedit" id="tagedit{{ novel.id }}">
+                <form id="{{ novel.id }}" action="{{ url_for('tag_edit', novel_id=novel.id) }}" method="post">
+                    <table>
+                        <tr>
+                            <td><i class="icon-tag"></i></td>
+                            <td><i class="icon-lock"></i></td>
+                            <td><i class="icon-ban-circle"></i></td>
+                        </tr>
+                        {% for tag in novel.tag_list %}
+                        {% if tag.status or (not tag.status and not tag.edit) %}
+                        <tr>
+                            <td>{{ forms.input('tag.tag', value=tag.tag, id=tag.tag) }}</td>
+                            <td><input type="checkbox" id="{{ tag.tag }}" value="rock" {% if not tag.edit %}checked{% endif %}/></td>
+                            <td><input type="checkbox" id="{{ tag.tag }}" value="ban" {% if not tag.status %}checked{% endif %}/></td>
+                        </tr>
+                        {% endif -%}
+                        {%- endfor %}
+                    </table>
+                <button type="button" onclick="posttag({{ novel.id}});">SEND</button>
+                <!--{{ forms.input('submit', type='submit', value='SEND') }}-->
+                </form>
+            </div><!-- end of tagedit-->
+        </dd>
+        <dt><i class="icon-pencil"></i></dt>
+        <dd><p>{{ novel.summary }}</p></dd>
+    </dl>
+    <div id="novelmenu">
+        {{ forms.linkbutton(url_for('edit_novel', novel_id=novel.id), "EDIT", "icon-edit") }}
+        {{ forms.linkbutton(url_for('delete_novel', novel_id=novel.id), "DEL", "icon-trash") }}
+    </div>
+    {% endif %}
     {% endfor %}
-  </div>
+</div><!--end of novel-->
 {% endblock %}

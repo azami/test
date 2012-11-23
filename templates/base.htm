@@ -13,6 +13,7 @@
     </head>
     <body>
         <div class="header">
+            <h1><a href="{{ url_for('index') }}"><i class="icon-tags"></i>たぐさーちα</a></h1>
             <div class="header_menu">
                 {% import 'forms.htm' as forms %}
                 {% block header %}
@@ -30,15 +31,12 @@
                                 <dt>password</dt>
                                 <dd>{{ forms.input('password', type='password') }}</dd>
                             </dl>
-                            <input type="submit" value="SENT"/>
+                            <input type="submit" value="SEND"/>
                             <br clear="all"/>
                         </form>
                     </div>
                 {% endif %}
             </div><!-- end class header_menu-->
-            {% if not 'adfree' in conf %}
-            ad
-            {% endif %}
             {% endblock %}
         </div><!-- end header -->
         <div class="content">{% block content %}{% endblock %}</div>

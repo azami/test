@@ -1,22 +1,29 @@
 {% extends "base.htm" %}
 {% block title %}{{ title }}{% endblock %}
 {% block content %}
-  {% if message %}
-    <div id="error">{{ message }}</id>
-  {% endif %}
-  {% import 'forms.htm' as forms %}
-  <form action='{{ path }}' method='post'/>
-    <dl>
-      <dt>タイトル</dt>
-      <dd><input type="text" value="{{ novel['title'] }}" name="title"></dd>
-      <dt>タグ(半角スペースで区切ってください)</dt>
-      {% if tags %}
-        <dd><input type="text" value="{{ tags }}" name="tags"></dd>
-      {% else %}
-        <dd><input type="text" value="{{ novel['tags'] }}" name="tags"></dd>
-      {% endif%}
-      <dt>あらすじ</dt>
-      <dd><textarea name="summary" rows="5" cols="40">{{ novel['summary'] }}</textarea></dd>
-      <dt>{{ forms.input('submit', type='submit', value='送信') }}</dt>
-   </form>
+{% if message %}
+<div id="error">
+    <h3>エラー</h3>
+    {{ message }}
+</div>
+<br/>
+{% endif %}
+<div class="form">
+{% import 'forms.htm' as forms %}
+    <form action='{{ path }}' method='post'/>
+        <dl>
+            <dt>タイトル</dt>
+            <dd>{{ forms.input("title", value=novel['title']) }}</dd>
+            <dt>タグ(半角スペースで区切ってください)</dt>
+            {% if tags %}
+            <dd>{{ forms.input("tags", value=tags) }}</dd>
+            {% else %}
+            <dd>{{ forms.input("tags", value=novel['tags']) }}</dd>
+            {% endif%}
+            <dt>あらすじ</dt>
+            <dd>{{ forms.textarea("summary", value=novel['summary']) }}</dd>
+    </form>
+<br clrar="all"/>
+{{ forms.input('submit', type='submit', value='SEND') }}
+</div>
 {% endblock %}

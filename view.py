@@ -156,9 +156,8 @@ def edit_profile():
         message = u'未知のエラーです'
         return internal_server_error(message)
     if request.method == 'GET':
-        decode_user = util.decode_user(user)
         return render_template('update_user.htm', path=request.base_url,
-                               user=decode_user, conf=g.config)
+                               user=user, conf=g.config)
     result = util.update_user(request, g, user)
     if not result['status']:
         return result['page']
@@ -193,11 +192,10 @@ def edit_novel(novel_id):
         return internal_server_error(message)
 
     tags = [tag.tag for tag in novel.tag_list if tag.status]
+    print tags
     if request.method == 'GET':
-        decode_novel = util.decode_novel(novel)
-        decode_tags = [util.sanitize_decode(tag) for tag in tags]
         return render_template('update_novel.htm', title=u'小説情報編集',
-                               novel=decode_novel, tags=' '.join(decode_tags),
+                               novel=novel, tags=' '.join(tags),
                                conf=g.config)
     result = util.update_novel(request, g, novel)
     if not result['status']:
@@ -206,22 +204,13 @@ def edit_novel(novel_id):
 
 
 
-@app.route('/user/quit')
+@app.route('/user/goodbye', methods=['GET', 'DELETE'])
 @require_login
-def quit():
-    user = g.db_session.query(User).filter(User.id == session['user']).first()
-    if not user:
-        message = u'未知のエラーです'
-        return internal_server_error(message)
-    for novel in user.novel_list:
-        for tag in novel.tag_list:
-            tag.status = False
-        novel.status = False
-    user.mail += '+quit+%s' % datetime.date.today()
-    user.status = False
-    g.db_session.add(user)
-    g.db_session.commit()
-    return redirect(url_for('logout'))
+def goodbye():
+    if request.method == 'DELETE':
+        util.delete_user(session['user'], 'quit')
+        return redirect(url_for('logout'))
+    return render_template('goodbye.htm', conf=g.config)
 
 
 @app.route('/user/delete_novel/<int:novel_id>')
@@ -239,6 +228,11 @@ def delete_novel(novel_id):
     g.db_session.commit()
     return redirect(url_for('user_index'))
 
+
+@app.route('/user/tag_edit/<int:novel_id>', methods=['POST'])
+@require_login
+def tag_edit(novel_id):
+    pass
 
 @app.route(LINKPATH)
 @app.route(LINKPATH + '/<int:id>')

@@ -1,0 +1,8 @@
+{% extends "base.htm" %}
+{% block title %}signup{% endblock %}
+{% block content %}
+退会します。
+<form action='{{ url_for('goodbye') }}' method='delete'/>
+    {{ forms.input('submit', type='submit', value='はい。') }}
+</form>
+{% endblock %}

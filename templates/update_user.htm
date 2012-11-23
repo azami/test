@@ -1,31 +1,40 @@
 {% extends "base.htm" %}
 {% block title %}{{ title }}{% endblock %}
 {% block content %}
-  {% if message %}
-    <div id="error">{{ message }}</id>
-  {% endif %}
-  <div class="info">
+{% if message %}
+<div id="error">
+    <h3>エラー</h3>
+    {{ message }}
+</div>
+{% endif %}
+<div class="form">
     <h3>注意事項</h3>
     <ul>
-      <li>PC及びスマートフォンで閲覧可能なサイトのみ登録が可能です。専用ブラウザが必要なサイトは登録できません。</li>
-      <li>PCサイトの場合は必ず「PCサイト」等の明記をお願いします。</li>
-      <li>サイトの登録は必ず管理人が行ってください。</li>
-  </div>
-  {% import 'forms.htm' as forms %}
-  <form action='{{ path }}' method='post'/>
-    <dl>
-      <dt>名前</dt>
-      <dd><input type="text" value="{{ user['name'] }}" name="name"></dd>
-      <dt>メールアドレス</dt>
-      <dd><input type="text" value="{{ user['mail'] }}" name="mail"></dd>
-      <dt>パスワード</dt>
-      <dd> {{ forms.input('password', type='password') }}</dd>
-      <dt>パスワード(再入力)</dt>
-      <dd> {{ forms.input('password2', type='password') }}</dd>
-      <dt>サイト名</dt>
-      <dd><input type="text" value="{{ user['site'] }}" name="site"></dd>
-      <dt>URL</dt>
-      <dd><input type="url" value="{{ user['url'] }}" name="url"></dd>
-      <dd> {{ forms.input('submit', type='submit', value='送信') }}</dd>
-  </form>
+        <li>PC及びスマートフォンで閲覧可能なサイトのみ登録が可能です。専用ブラウザが必要なサイトは登録できません。</li>
+        <li>PCサイトの場合は必ず「PCサイト」等の明記をお願いします。</li>
+        <li>サイトの登録は必ず管理人が行ってください。</li>
+    {% import 'forms.htm' as forms %}
+    <br/>
+    <form action='{{ path }}' method='post'/>
+        <dl>
+            <dt>名前</dt>
+            <dd> {{ forms.input('name', value=user['name']) }}</dd>
+            <dt>メールアドレス</dt>
+            <dd> {{ forms.input('mail', value=user['mail']) }}</dd>
+            <dt>パスワード</dt>
+            <dd> {{ forms.input('password', type='password') }}</dd>
+            <dt>パスワード(再入力)</dt>
+            <dd> {{ forms.input('password2', type='password') }}</dd>
+            <dt>サイト名</dt>
+            <dd> {{ forms.input('site', value=user['site']) }}</dd>
+            <dt>URL</dt>
+            <dd> {{ forms.input('url', value=user['url']) }}</dd>
+        </dl>
+        <br clear="all"/>
+        {{ forms.input('submit', type='submit', value='SEND') }}
+        {% if 'user' in session %}
+        {{ forms.linkbutton(url_for('goodbye'), "REMOVE") }}
+        {% endif %}
+    </form>
+</div>
 {% endblock %}
