@@ -8,10 +8,16 @@ import unicodedata
 import datetime
 import re
 import threading
+import uuid
+import base64
 from flask import redirect, render_template, session
 
 AGENT = 'tag_search_agent'
 MOBAGENT = 'Mozilla/5.0 (iPhone; CPU iPhone OS 5_0 like Mac OS X) AppleWebKit/534.46 (KHTML, like Gecko) Version/5.1 Mobile/9A334 Safari/7534.48.3'
+
+
+def generate_cookie():
+    return base64.b64encode(uuid.uuid4().bytes)
 
 
 def sanitize(string):

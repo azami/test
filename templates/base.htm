@@ -1,45 +1,54 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
-<html lang="ja">
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ja">
+    <head>
     {% block head %}
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /> 
-    <link rel="stylesheet" href="{{ conf.device }}.css" />
-    <title>{% block title %}{% endblock %}たぐさーち</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" type="text/css" media="all">
+        <link media="only screen and (max-device-width:480px)" href="{{ url_for('static', filename='smartphone.css') }}" type="text/css" rel="stylesheet"/>
+        <script type="text/javascript" src="{{ url_for('static', filename='jquery.min.js') }}"></script>
+        <script type="text/javascript" src="{{ url_for('static', filename='tag_search.js') }}"></script>
+        <title>{% block title %}{% endblock %}たぐさーち</title>
     {% endblock %}
-  </head>
-<body>
-   <div class="header">
-     {% block header %}
-       {% if 'user' in session %}
-         <div id="userheader">
-           <a href="/user" target="_top">USERPAGE</a>
-           <a href="/logout" target="_top">LOGOUT</a>
-         </div>
-       {% else %}
-         <div id="nouser">
-           {% if conf['device'] == 'mobile' %}
-             <a href="/signup" target="_top">SIGNUP</a>
-             <a href="/login" target="_top">LOGIN</a>
-           {% else %}
-             <a href="/signup" target="_top">SIGNUP</a>
-             <a href="/login" target="_top">LOGIN</a>
-           {% endif %}
-         </div>
-       {% endif %}
-           {% if not 'adfree' in conf %}
-              ad
-           {% endif %}
-     {% endblock %}
-   </div>
-   <div class="content">{% block content %}{% endblock %}</div>
-   <div class="footer">
-     {% block footer %}
-       {% if not 'adfree' in  conf %}
-         ad
-       {% endif %}
+    </head>
+    <body>
+        <div class="header">
+            <div class="header_menu">
+                {% import 'forms.htm' as forms %}
+                {% block header %}
+                {% if 'user' in session %}
+                {{ forms.linkbutton(url_for('user_index'), 'userpage') }}
+                {{ forms.linkbutton(url_for('logout'), 'logout') }}
+                {% else %}
+                {{ forms.linkbutton(url_for('signup'), 'signup') }}
+                <button id="login_form" onclick="$('#login').toggle();" >LOGIN</button>
+                    <div id="login">
+                        <form action="{{ url_for('login') }}" method="post"/>
+                            <dl>
+                                <dt>email</dt>
+                                <dd>{{ forms.input('mail') }}</dd>
+                                <dt>password</dt>
+                                <dd>{{ forms.input('password', type='password') }}</dd>
+                            </dl>
+                            <input type="submit" value="SENT"/>
+                            <br clear="all"/>
+                        </form>
+                    </div>
+                {% endif %}
+            </div><!-- end class header_menu-->
+            {% if not 'adfree' in conf %}
+            ad
+            {% endif %}
+            {% endblock %}
+        </div><!-- end header -->
+        <div class="content">{% block content %}{% endblock %}</div>
+        <div class="footer">
+        {% block footer %}
+        {% if not 'adfree' in  conf %}
+        ad
+        {% endif %}
         <hr/>
         <div id="copyright">Copyright 2012 by <a href="{{ host }}">tag search</a>.</div>
-       {% endblock %}
-   </div>
+        {% endblock %}
+    </div>
 </body>

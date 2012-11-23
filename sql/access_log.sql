@@ -5,6 +5,7 @@ drop table if exists novel_logs;
 
 create table in_logs(
     user_id integer default null,
+    cookie varchar(16) not null,
     date date not null,
     ua varchar(255) not null,
     ip varchar(15) not null,
@@ -15,6 +16,7 @@ create table in_logs(
 
 create table out_logs(
     user_id integer default null,
+    cookie varchar(16) not null,
     novel_id integer not null,
     date date not null,
     ua varchar(255) not null,

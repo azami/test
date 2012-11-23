@@ -5,7 +5,7 @@
     <div id="error">{{ message }}</id>
   {% endif %}
   {% import 'forms.htm' as forms %}
-  <form action='{{ conf['root'] }}/login' method='post'/>
+  <form action="{{ url_for('login') }}" method="post"/>
     <dl>
       <dt>メールアドレス</dt>
       <dd> {{ forms.input('mail') }}</dd>
