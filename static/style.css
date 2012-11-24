@@ -141,11 +141,30 @@ input:focus, input:active, input:hover, button:active, button:hover {
     padding: 10px 0 10px 20px;
 }
 
+#usermenu i, #novelmenu i{
+    font-size: 1.2em;
+}
+
 .novel a {
     color: #000;
     text-decoration: none;
+    cursor: pointer;
 }
 
 .tagedit {
     display: none;
+}
+
+.tagedit td {
+    text-align: center;
+}
+
+#gray {
+    color: gray;
+}
+
+.tagedit input[type="submit"], .tagedit button {
+    width: 30px;
+    font-size: 1em;
+    color: #000;
 }

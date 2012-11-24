@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from flask import Flask, request, g, render_template, url_for, session, redirect
+from flask import Flask, request, g, render_template, url_for, session, redirect,\
+        jsonify, abort
 from config import Config, ROBOTS, LINKPATH
 from db import User, Novel, Tag
 import util
@@ -51,7 +52,6 @@ def index():
     if len(tag_list) > 200:
         sorted_tag = sorted_tag[:200]
     tags={}
-    print len(tag_list)
     for tag in sorted_tag:
         tags[tag]= {'size': int(len(tag_list) // tag_list.count(tag)),
                     'num': tag_list.count(tag)}
@@ -192,7 +192,6 @@ def edit_novel(novel_id):
         return internal_server_error(message)
 
     tags = [tag.tag for tag in novel.tag_list if tag.status]
-    print tags
     if request.method == 'GET':
         return render_template('update_novel.htm', title=u'小説情報編集',
                                novel=novel, tags=' '.join(tags),
@@ -229,13 +228,55 @@ def delete_novel(novel_id):
     return redirect(url_for('user_index'))
 
 
-@app.route('/user/tag_edit/<int:novel_id>', methods=['POST'])
+@app.route('/user/update_tags/<int:novel_id>', methods=['POST'])
 @require_login
-def tag_edit(novel_id):
-    pass
+def update_tags(novel_id):
+    novel = g.db_session.query(Novel).filter(Novel.user_id == session['user'],
+                                             Novel.id == novel_id).first()
+    if not novel:
+        abort(503)
+    tag_dict = {}
+    new_taglist = []
+    for num in request.form:
+        data = request.form.get(num)
+        data_dict = {}
+        for x in request.form.getlist(num):
+            if x == 'l':
+                data_dict['lock'] = True
+                continue
+            if x == 'b':
+                data_dict['ban'] = True
+                continue
+            data_dict['tag'] = util.encode_string(x)
+        if not data_dict:
+            data_dict['tag'] = request.form.get(num)
 
-@app.route(LINKPATH)
-@app.route(LINKPATH + '/<int:id>')
+        if not data_dict['tag']:
+            continue
+        tag = g.db_session.query(Tag).filter(Tag.novel_id == novel_id).\
+                filter(Tag.tag == data_dict['tag']).first()
+        if not tag:
+            tag = Tag(tag=data_dict['tag'], novel_id=novel_id)
+        else:
+            tag.status = True
+            tag.edit = True
+        if data_dict.get('ban'):
+            tag.edit = False
+            tag.status = False
+        if data_dict.get('lock'):
+            tag.edit = False
+        new_taglist.append(tag)
+    for old_tag in novel.tag_list:
+        if not old_tag in new_taglist:
+            old_tag.status = False
+            new_taglist.append(old_tag)
+    g.db_session.add_all(new_taglist)
+    g.db_session.commit()
+    return ' '.join([tag.tag for tag in novel.tag_list if tag.status])
+
+
+@app.route('/link')
+@app.route('/link' + '/<int:id>')
 def link_to_site(id=0, tag=None):
     to = request.args.get('to')
     if id:

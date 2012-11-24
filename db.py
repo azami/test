@@ -84,10 +84,6 @@ class Tag(Base):
     status = Column(Boolean, nullable=False, default=True)
     UniqueConstraint(novel_id, tag, name='tag_key')
 
-    @property
-    def url(self):
-        return '/tag/' + self.tag
-    
     novel = relationship(Novel, backref='tags')
 
     def __repr__(self):

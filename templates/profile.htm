@@ -19,40 +19,65 @@
     </div>
 </div><!--end of user-->
 <div class="novel">
+     <script type="text/javascript">
+         var tag_tr='<tr><td>{{ forms.input("tag") }}</td><td><input type="checkbox" value="l"/></td><td><input type="checkbox" value="b"/></td><td><button type="button" onclick="$(this).parent().parent().remove();"><i class="icon-trash"></i></button></td>></tr>';
+
+         function numbering(){
+             $("tbody tr").each(function(i){
+                     $(this).find("input").attr('name', i);
+                     });
+         }
+
+         var url='{{ url_for('update_tags', novel_id=0) }}';
+
+         function postag(id){
+             numbering();
+             var formid = "#" + id;
+             var tagdata =($(formid).serializeArray());
+             $.ajax({
+                 url: url + id,
+                 type: "POST",
+                 data: tagdata,
+                 success: function(o){
+                     $("#tag" + id).text(o);
+                     alert("updated");
+                 },
+                error: function(xhr, textstatus, errorTrown){
+                    alert("error");
+                }
+            });
+    }
+    </script>
     <h2>novel</h2>
     {% for novel in novels %}
     {% if novel.status %}
-    <script type="text/javascript">
-        $("#noveltag{{ novel.id }}").click(function(){
-                alert('test');
-            $("#tagedit{{ novel.id }}").toggle();
-        });
-    </script>
     <dl>
         <dt><i class="icon-book"></i></dt>
         <dd>{{ novel.title }}</dd>
-        <dt><i class="icon-tags"></i> <a id="noveltag{{ novel.id }}" href="#"><i class="icon-wrench"></i></a></dt>
-        <dd>{% for tag in novel.tag_list %}{{ tag.tag }} {% endfor %}
+        <dt><i class="icon-tags"></i> <a id="noveltag{{ novel.id }}" onclick="$('#tagedit{{ novel.id }}').toggle();"><i class="icon-wrench"></i></a></dt>
+        <dd><p id="tag{{ novel.id }}">{% for tag in novel.tag_list %}{%if tag.status %}{{ tag.tag }} {% endif %}{% endfor %}</p>
             <div class="tagedit" id="tagedit{{ novel.id }}">
-                <form id="{{ novel.id }}" action="{{ url_for('tag_edit', novel_id=novel.id) }}" method="post">
-                    <table>
+                <form id="{{ novel.id }}">
+                    <table id="tagtable{{ novel.id }}">
                         <tr>
-                            <td><i class="icon-tag"></i></td>
-                            <td><i class="icon-lock"></i></td>
-                            <td><i class="icon-ban-circle"></i></td>
+                            <td><i id="gray" class="icon-tag"></i></td>
+                            <td><i id="gray" class="icon-lock"></i></td>
+                            <td><i id="gray" class="icon-ban-circle"></i></td>
+                            <td></td>
                         </tr>
                         {% for tag in novel.tag_list %}
                         {% if tag.status or (not tag.status and not tag.edit) %}
                         <tr>
-                            <td>{{ forms.input('tag.tag', value=tag.tag, id=tag.tag) }}</td>
-                            <td><input type="checkbox" id="{{ tag.tag }}" value="rock" {% if not tag.edit %}checked{% endif %}/></td>
-                            <td><input type="checkbox" id="{{ tag.tag }}" value="ban" {% if not tag.status %}checked{% endif %}/></td>
+                            <td>{{ forms.input('tag', value=tag.tag) }}</td>
+                            <td><input type="checkbox" value="l" {% if not tag.edit %}checked="checked"{% endif %}/></td>
+                            <td><input type="checkbox" value="b" {% if not tag.status %}checked="checked"{% endif %}/></td>
+                            <td><button type="button" onclick="$(this).parent().parent().remove();"><i class="icon-trash"></i></button></td>
                         </tr>
                         {% endif -%}
                         {%- endfor %}
                     </table>
-                <button type="button" onclick="posttag({{ novel.id}});">SEND</button>
-                <!--{{ forms.input('submit', type='submit', value='SEND') }}-->
+                    <button type="button" onclick="$('#tagtable{{ novel.id }} > tbody:last').append(tag_tr);"><i class="icon-plus"></i></button>
+                    <button type="button" onclick="postag({{ novel.id}});"><i class="icon-upload"></i></button>
                 </form>
             </div><!-- end of tagedit-->
         </dd>
