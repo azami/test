@@ -68,33 +68,39 @@ def tag_search(tag, page=0):
         return page_not_found(u'検索結果がないです')
     novels = [tag.novel for tag in tags if tag.novel.status]
     novels = sorted(novels, key=lambda x: x.id)
-    return render_template('search.htm', novels=novels, conf=g.config)
+    page += 1
+    return render_template('search.htm', novels=novels,
+                           page=page, conf=g.config)
 
 
 @app.route('/search')
 @app.route('/search/<int:page>')
 def search(page=0):
     novels = []
-    words = util.sanitize(request.args['words']).split()
+    words = util.encode_string(request.args['words']).split()
     user_query = g.db_session.query(User).filter(User.status == True)
     novel_query = g.db_session.query(Novel).filter(Novel.status == True)
     tag_query = g.db_session.query(Tag).filter(Tag.status == True)
     for word in words:
-        user_query = user_query.filter(User.name.like(word))
-        novel_query = novel_query.filter(Novel.title.like(word))
-        novel_query = novel_query.filter(Novel.summary.like(word))
-        tag_query = tag_query.filter(Tag.tag == word)
+        user_query = user_query.filter(User.name.like('%' + word+ '%'))
+        novel_query = novel_query.filter(Novel.title.like('%' + word + '%'))
+        novel_query = novel_query.filter(Novel.summary.like('%' + word + '%'))
+        tag_query = tag_query.filter(Tag.tag.like('%' + word +'%'))
 
-    users = user_query.all()
-    for user in users:
+    for user in user_query:
         novels += [novel for novel in user.novel_list if novel.status]
     novels += novel_query.all()
     tags = tag_query.all()
     novels += [tag.novel for tag in tags if tag.novel.status]
-    novels = sorted(util.search_result(page, set(novels)), key=lambda x: x.id)
     if not novels:
         return page_not_found(u'検索結果がないです')
-    return render_template('search.htm', novels=novels, conf=g.config)
+    novellist = list(set(novels))
+    novels = sorted(util.search_result(page, novels),
+                    key=lambda x: x.id)
+    page += 1
+    return render_template('search.htm', novels=novels, page=page,
+                           reqpage="search", words=request.args['words'],
+                           pnum=int(len(novellist) / page), conf=g.config)
     
 
 @app.route('/user')
@@ -170,6 +176,37 @@ def novelinfo(novel_id):
     return render_template('novel.htm', novel=novel, conf=g.config)
 
 
+@app.route('/novel/tagedit/<int:novel_id>', methods=['POST'])
+def tagedit(novel_id):
+    novel = g.db_session.query(Novel).filter(Novel.id == novel_id).one()
+    if not novel:
+        abort(503)
+    taglist = []
+    for num in request.form:
+        tagstr = util.encode_string(request.form.get(num))
+        if not tagstr:
+            continue
+        taglist.append(tagstr)
+    edit_tags = [tag for tag in novel.active_tags if tag.status and tag.edit]
+    edit_taglist = [tag.tag for tag in edit_tags]
+    for tag in edit_tags:
+        if not tag.tag in taglist:
+            tag.status = False
+    for tagstr in taglist:
+        if not tagstr in edit_taglist:
+            tag = g.db_session.query(Tag).filter(Tag.tag == tagstr).\
+                    filter(Tag.novel_id == novel_id).first()
+            if not tag:
+                tag = Tag(tag=tagstr, novel_id=novel_id, edit=True)
+            if not tag.edit:
+                continue
+            tag.status = True
+            edit_tags.append(tag)
+    g.db_session.add_all(edit_tags)
+    g.db_session.commit()
+    return ' '.join([tag.tag for tag in novel.active_tags])
+
+
 @require_login
 @app.route('/user/add_novel', methods=['GET', 'POST'])
 def add_novel():
@@ -203,11 +240,11 @@ def edit_novel(novel_id):
 
 
 
-@app.route('/user/goodbye', methods=['GET', 'DELETE'])
+@app.route('/user/goodbye', methods=['GET', 'POST'])
 @require_login
 def goodbye():
-    if request.method == 'DELETE':
-        util.delete_user(session['user'], 'quit')
+    if request.method == 'POST':
+        util.delete_user(g, session['user'], 'quit')
         return redirect(url_for('logout'))
     return render_template('goodbye.htm', conf=g.config)
 
@@ -251,7 +288,7 @@ def update_tags(novel_id):
         if not data_dict:
             data_dict['tag'] = request.form.get(num)
 
-        if not data_dict['tag']:
+        if not data_dict.get('tag'):
             continue
         tag = g.db_session.query(Tag).filter(Tag.novel_id == novel_id).\
                 filter(Tag.tag == data_dict['tag']).first()
@@ -272,11 +309,11 @@ def update_tags(novel_id):
             new_taglist.append(old_tag)
     g.db_session.add_all(new_taglist)
     g.db_session.commit()
-    return ' '.join([tag.tag for tag in novel.tag_list if tag.status])
+    return ' '.join([tag.tag for tag in novel.active_tags])
 
 
 @app.route('/link')
-@app.route('/link' + '/<int:id>')
+@app.route('/link/<int:id>')
 def link_to_site(id=0, tag=None):
     to = request.args.get('to')
     if id:

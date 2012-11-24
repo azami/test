@@ -131,7 +131,7 @@ input:focus, input:active, input:hover, button:active, button:hover {
     padding: 0 0 30px 0;
 }
 
-.user h2, .novel h2{
+.user h2, .novel h2, #novel_title{
     border-left:7px solid gray;
     font-size: 1em;
     padding:.6em .8em;
@@ -141,7 +141,7 @@ input:focus, input:active, input:hover, button:active, button:hover {
     padding: 10px 0 10px 20px;
 }
 
-#usermenu i, #novelmenu i{
+#usermenu i, #novelmenu i, #search i{
     font-size: 1.2em;
 }
 
@@ -163,8 +163,83 @@ input:focus, input:active, input:hover, button:active, button:hover {
     color: gray;
 }
 
-.tagedit input[type="submit"], .tagedit button {
+.tagedit input[type="submit"], .tagedit button, #search button {
     width: 30px;
     font-size: 1em;
     color: #000;
+}
+
+.tags a:link, .tags a:active, .tags a:visited, #novel_info a, #novel_title a, #link{
+    text-decoration: none;
+    color: #708090;
+}
+
+.tags a:hover {
+    color: #fff;
+}
+
+#t0 {
+    color: #ff6347;
+    font-weight: bold;
+    font-size: 1.5em;
+}
+
+#t1 {
+    color: #ff6347;
+    font-size: 1.5em;
+}
+
+#t2 {
+    color: #ff8C00;
+    font-weight: bold;
+    font-size: 1.5em;
+}
+
+#t3 {
+    color: #ff8C00;
+    font-size: 1.5em;
+}
+
+#t4 {
+    font-weight: bold;
+    font-size: 1.5em;
+}
+
+#t5 {
+    font-size: 1.5em;
+}
+
+#t6 {
+    font-size: 1.4em;
+    font-weight: bold;
+}
+
+#t7 {
+    font-size: 1.4em;
+}
+
+#t8 {
+    font-size: 1.3em;
+}
+
+#t9 {
+    font-size: 1.1em;
+}
+
+#t10 {
+    font-size: 1.0em;
+}
+
+.novel{
+    color: gray;
+}
+
+#novel_info {
+    padding: 0 20px 20px 20px;
+    font-size: 0.9em;
+    color: gray:
+}
+
+#novel_info a:hover {
+    font-weight: bold;
 }

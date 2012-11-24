@@ -1,10 +1,71 @@
 {% extends "base.htm" %}
-{% block title %}小説情報{% endblock %}
 {% block content %}
-  {% block novel %}
-    <div class="novel">
-      {% from 'util.htm' import dump_novel_info as novel_info %}
-      {{ novel_info(novel) }}
-    </div>
-  {% endblock %}
+{% block novel %}
+<div class="novel">
+    <script type="text/javascript">
+        var tag_tr='<tr><td>{{ forms.input("tag") }}</td><td><button type="button" onclick="$(this).parent().parent().remove();"><i class="icon-trash"></i></button></td>></tr>';
+
+        function numbering(){
+            $("tbody tr").each(function(i){
+                    $(this).find("input").attr('name', i);
+                    });
+        }
+
+        var url='{{ url_for('tagedit', novel_id=0) }}';
+
+        function postag(id){
+            numbering();
+            var formid = "#" + id;
+            var tagdata =($(formid).serializeArray());
+            $.ajax({
+                 url: url + id,
+                 type: "POST",
+                 data: tagdata,
+                 success: function(o){
+                     $("#tag" + id).text(o);
+                     alert("updated");
+                 },
+                error: function(xhr, textstatus, errorTrown){
+                    alert("error");
+                }
+            });
+        }
+    </script>
+<h2><i class="icon-book"></i> {{ novel.title }}</h2>
+<dl>
+    <dt><i class="icon-user"></i></dt>
+    <dd>{{ novel.author.name }}</dd>
+    <dt><i class="icon-external-link"></i></dt>
+    <dd><a id="link" href="{{ url_for('link_to_site', id=novel.id, to=novel.author.quoteurl) }}" target="_blank">{{ novel.author.site }}</a></dd>
+    <dt><i class="icon-tags"></i> <a id="noveltag{{ novel.id }}" onclick="$('#tagedit{{ novel.id }}').toggle();"><i class="icon-wrench"></i></a></dt>
+    <dd><p id="tag{{ novel.id }}">{% for tag in novel.tag_list %}{%if tag.status %}{{ tag.tag }} {% endif %}{% endfor %}</p>
+        <div class="tagedit" id="tagedit{{ novel.id }}">
+            <form id="{{ novel.id }}">
+                <table id="tagtable{{ novel.id }}">
+                    <tr>
+                        <td><i id="gray" class="icon-tag"></i></td>
+                        <td></td>
+                    </tr>
+                    {% for tag in novel.active_tags %}
+                    <tr>
+                        {% if tag.edit %}
+                        <td>{{ forms.input('tag', value=tag.tag) }}</td>
+                        <td><button type="button" onclick="$(this).parent().parent().remove();"><i class="icon-trash"></i></button></td>
+                        {% else %}
+                        <td>{{ tag.tag }}</td>
+                        <td><i id="gray" class="icon-lock"></i></td>
+                    {% endif -%}
+                    </tr>
+                    {%- endfor %}
+                </table>
+                <button type="button" onclick="$('#tagtable{{ novel.id }} > tbody:last').append(tag_tr);"><i class="icon-plus"></i></button>
+                <button type="button" onclick="postag({{ novel.id}});"><i class="icon-upload"></i></button>
+            </form>
+        </div><!-- end of tagedit-->
+    </dd>
+    <dt><i class="icon-pencil"></i></dt>
+    <dd><p>{{ novel.summary }}</p></dd>
+</dl>
+</div>
+{% endblock %}
 {% endblock %}

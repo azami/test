@@ -1,14 +1,21 @@
 {% extends "base.htm" %}
-{% block title %}たぐさーち{% endblock %}
 {% block content %}
-  {% block searchform %}
-    <div id="search">
-        {% import 'forms.htm' as forms %}
-            <form action='/search' method='get'/>
-            {{ forms.input('words') }}{{ forms.input('', type='submit', value='検索') }}
-            </form>
-    </div>
-  {% endblock %}
-  {% block searchpage %}
-  {% endblock %}
+{% block searchform %}
+<div id="search">
+        <form action='/search' method='get'/>
+            {{ forms.input('words') }}
+            <button type="submit"><i class="icon-search"></i></button>
+        </form>
+</div>
+{% endblock %}
+{% block searchpage %}
+<div class="result">
+    {% for novel in novels %}
+    {% from 'util.htm' import dump_novel_info as novel_info %}
+    {{ novel_info(novel) }}
+    {% endfor %}
+</div>
+<div class="pagelink">
+</div>
+{% endblock %}
 {% endblock %}

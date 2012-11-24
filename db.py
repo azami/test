@@ -13,7 +13,6 @@ MAXLEN = 200
 
 
 def create_dbengine(config):
-    print config['database']
     return create_engine('%s://%s:%s@localhost/%s?charset=utf8' %
                          (config['db_connect'],
                           config['db_user'],
@@ -62,14 +61,14 @@ class Novel(Base):
     UniqueConstraint(user_id, title, name='user_novel')
 
     @property
-    def url(self):
-        return LINKPATH + '?' + urllib.urlencode({'id': self.id,
-                                                  'to': self.author.quoteurl})
+    def shortsummary(self):
+        if len(self.summary) > MAXLEN:
+            return self.summary[:MAXLEN] + u'……'
+        return self.summary
 
     @property
-    def shortsummary(self):
-        if len(summary) > MAXLEN:
-            return summary[:MAXLEN] + '……'
+    def active_tags(self):
+        return [tag for tag in self.tag_list if tag.status]
 
     def __repr__(self):
         return '<Novels: id:%s>' % self.id

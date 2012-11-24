@@ -52,7 +52,7 @@ def search_result(page, results):
             if start_num + SHOW_MAX < SHOW_MAX:
                 results = results[start_num:]
             else:
-                results = results[start_result:start_result + SHOW_MAX]
+                results = results[start_num:start_num + SHOW_MAX]
         return results
     except:
         return 
@@ -133,6 +133,7 @@ def update_tags(novel, tags, g):
         g.db_session.commit()
 
 
+
 def update_novel(request, g, novel=None):
     user_id = session['user']
     message = check_form_novel(request)
@@ -167,10 +168,9 @@ def update_novel(request, g, novel=None):
         return_page = render_template('update_novel.htm', message=message,
                                       title=u'エラー', novel=request.form,
                                       conf=g.config)
-#        return {'status': False, 'page': return_page}
 
 
-def delete_user(user_id, reason):
+def delete_user(g, user_id, reason):
     try:
         user = g.db_session.query(User).filter(User.id == user_id).first()
         if not user:
@@ -180,7 +180,7 @@ def delete_user(user_id, reason):
             for tag in novel.tag_list:
                 tag.status = False
             novel.status = False
-        user.mail += '+' + reason + datetime.date.today()
+        user.mail += '+' + reason + str(datetime.date.today())
         user.status = False
         g.db_session.add(user)
         g.db_session.commit()
@@ -230,7 +230,7 @@ def logging_out(g, request, url, novel_id):
     user_id = 0
     if 'user' in session:
         user_id = session['user']
-        user = g.db_session(User).query.filter(User.id == user_id).one()
+        user = g.db_session.query(User).filter(User.id == user_id).first()
         if novel_id in [novel.id for novel in user.novel_list]:
             return
     outlog = g.logdb_session(OutLog).query.filter(OutLog.ua == ua).\

@@ -2,7 +2,7 @@
 
 from view import app
 from flask import g, request, session
-from config import db_config
+from config import db_config, SHOW_MAX
 import db
 import log_db
 import util
@@ -14,6 +14,7 @@ def before_request():
     ua = request.headers['User-Agent']
     g.config = {}
     g.config['device'] = util.device(ua)
+    g.config['maxnum'] = SHOW_MAX
     if request.args.get('ad') == 'shine':
         g.config['adfree'] = True
     g.db_session = db.Session(bind=db.engine)

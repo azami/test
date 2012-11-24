@@ -1,18 +1,15 @@
 {% macro dump_novel_info(novel) -%}
-  <dl>
-    <dt> title </dt>
-    <dd>{{ novel.title }}</dd>
-    <dt> site </dt>
-    <dd><a href="{{ novel.url }}" target="_blank">{{ novel.author.site }}</a></dd>
-    <dt> author </dt>
-    <dd>{{ novel.author.name }}</dd>
-    <dt> tags </dt>
-    <dd>
-      {% for tag in novel.tag_list %}
-        <a href="{{ tag.url }}" target="_top">{{ tag.tag }}</a>
-      {% endfor %}
-    </dd> 
-    <dt> summary</dt>
-    <dd>{{ novel.summary }}</dd>
-  </dl>
+<div class="novel">
+    <h2 id="novel_title"><a href="{{ url_for('novelinfo', novel_id=novel.id) }}" target="_top">{{ novel.title }}</a></h2>
+    <div id="novel_info">
+        <i class="icon-pencil"></i> {{ novel.author.name }}<br/>
+        <div id="site_link">
+            <a href="{{ url_for('link_to_site', id=novel.id, to=novel.author.quoteurl) }}" target="_blank"><i class="icon-external-link"></i> {{ novel.author.site }}</a><br/></div>
+        <i class="icon-tags"></i>
+        {% for tag in novel.active_tags %}
+        <a href="{{ url_for('tag_search', tag=tag.tag) }}" target="_top">{{ tag.tag }}</a> 
+        {% endfor %}
+        <p>{{ novel.shortsummary }}</p>
+    </div>
+</div>
 {%- endmacro %}

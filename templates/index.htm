@@ -1,9 +1,8 @@
 {% extends "search.htm" %}
-{% block title %}たぐさーち{% endblock %}
 {% block searchpage %}
-  <div class="tags">
+    <div class="tags">
     {% for tag in tags  %}
-      <a id="tag{{ tags[tag]['size'] }}" href="/tag/{{ tag }}" target="_top">{{ tag }}</a> 
+      <a id="t{{ tags[tag]['size'] }}" href="/tag/{{ tag }}" target="_top">{{ tag }}</a> 
     {% endfor %}
-  </div>
+    </div>
 {% endblock %}
