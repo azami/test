@@ -58,7 +58,7 @@ def index():
                         'num': tag_list.count(tag)}
         return render_template('index.htm', tags=tags, conf=g.config)
     except:
-        return internal_server_error('リロードしてみてください')
+        return internal_server_error(u'リロードしてみてください')
 
 
 @app.route('/tag/<tag>')
@@ -76,7 +76,7 @@ def tag_search(tag, page=0):
         return render_template('search.htm', novels=novels,
                                page=page, conf=g.config)
     except:
-        return internal_server_error('リロードしてみてください')
+        return internal_server_error(u'リロードしてみてください')
 
 
 @app.route('/search')
@@ -90,26 +90,26 @@ def search(page=0):
         tag_query = g.db_session.query(Tag).filter(Tag.status == True)
         for word in words:
             user_query = user_query.filter(User.name.like('%' + word+ '%'))
-            novel_query = novel_query.filter(Novel.title.like('%' + word + '%'))
-            novel_query = novel_query.filter(Novel.summary.like('%' + word + '%'))
+            title_query = novel_query.filter(Novel.title.like('%' + word + '%'))
+            summary_query = novel_query.filter(Novel.summary.like('%' + word + '%'))
             tag_query = tag_query.filter(Tag.tag.like('%' + word +'%'))
 
         for user in user_query:
             novels += [novel for novel in user.novel_list if novel.status]
-        novels += novel_query.all()
+        novels += title_query.all() + summary_query.all()
         tags = tag_query.all()
         novels += [tag.novel for tag in tags if tag.novel.status]
         if not novels:
             return page_not_found(u'検索結果がないです')
         novellist = list(set(novels))
-        novels = sorted(util.search_result(page, novels),
+        novels = sorted(util.search_result(page, novellist),
                         key=lambda x: x.id)
         page += 1
         return render_template('search.htm', novels=novels, page=page,
                                reqpage="search", words=request.args['words'],
                                pnum=int(len(novellist) / page), conf=g.config)
     except:
-        return internal_server_error('リロードしてみてください')
+        return internal_server_error(u'リロードしてみてください')
     
 
 @app.route('/user')
@@ -123,7 +123,7 @@ def user_index():
         return render_template('profile.htm', user=user,
                                novels=user.novel_list, conf=g.config)
     except:
-        return internal_server_error('リロードしてみてください')
+        return internal_server_error(u'リロードしてみてください')
 
 
 @app.route('/login', methods=['GET', 'POST'])
