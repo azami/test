@@ -179,7 +179,8 @@ def update_novel(request, g, novel=None):
         new_taglist = set(re.sub(' \+', ' ',
                           encode_string(request.form['tags'])).split(' '))
         for tagstr in new_taglist:
-            tags[tagstr] = {'status': True}
+            if tagstr:
+                tags[tagstr] = {'status': True}
         if not novel:
             novel = g.db_session.query(Novel).filter(Novel.user_id == user_id).\
                 filter(Novel.title == title).filter(Novel.status == False).first()
