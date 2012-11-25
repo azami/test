@@ -114,25 +114,53 @@ def check_form_novel(request):
         return u'文字数が多すぎます'
 
 
-def update_tags(novel, tags, g):
-    update_tags = []
-    novel_tags = [tag.tag for tag in novel.tag_list]
-    for tag in novel.tag_list:
-        if tag.tag in tags.keys():
-            tag.status = True
-            tag.edit = tags[tag.tag]
-            update_tags.append(tag)
+def update_tags(g, novel, new_tagdict, admin=False):
+    '''
+    new_tagdict = {tagname: {'edit': tag.edit,
+                             'status': tag.status}
+    '''
+    if admin:
+        old_taglist = novel.tag_list
+    else:
+        old_taglist = novel.active_tags
+    old_tagdict = {}
+    for tag in old_taglist:
+        old_tagdict[tag.tag] = tag
+    new_taglist = []
+    banned_taglist = []
+    disable_tagdict = {}
+    if not admin:
+        banned_taglist = [tag.tag for tag in novel.tag_list
+                if not tag.status and not tag.edit]                              
+        for tag in novel.tag_list:
+            if not tag.status and tag.edit:
+                disable_tagdict[tag.tag] = tag
+    for tagstr in new_tagdict.keys():
+        if tagstr in old_tagdict.keys():
+            if admin:
+                editable = new_tagdict[tagstr].get('edit', True)
+                old_tagdict[tagstr].edit = editable
+                print old_tagdict[tagstr].edit 
+                old_tagdict[tagstr].status = new_tagdict[tagstr]['status']
+            new_taglist.append(old_tagdict[tagstr])
         else:
-            if not tag.edit or session['user'] == novel.user_id:
-                tag.status = False
-                update_tags.append(tag)
-    update_tags += [Tag(tag=tag, novel_id=novel.id) \
-            for tag in tags.keys() if tag not in novel_tags]
-    if update_tags:
-        g.db_session.add_all(update_tags)
-        g.db_session.commit()
-
-
+            if not admin and tagstr in banned_taglist:
+                continue
+            if tagstr in disable_tagdict:
+                tag = disable_tagdict[tagstr]
+                tag.status = True
+            else:
+                tag = Tag(tag=tagstr, novel_id=novel.id)
+            new_taglist.append(tag)
+    delete_tags = set(old_taglist) -set(new_taglist)
+    for tag in delete_tags:
+        if admin:
+            if not tag.status and not tag.edit:
+                tag.edit = True
+            tag.status = False
+    g.db_session.add_all(list(delete_tags) + list(new_taglist))
+    g.db_session.commit()
+    
 
 def update_novel(request, g, novel=None):
     user_id = session['user']
@@ -147,9 +175,10 @@ def update_novel(request, g, novel=None):
         title = encode_string(request.form['title'])
         summary = encode_string(request.form['summary'])
         tags = {}
-        for tag in set(re.sub(' \+', ' ',
-                       encode_string(request.form['tags'])).split(' ')):
-            tags[tag] = True
+        new_taglist = set(re.sub(' \+', ' ',
+                          encode_string(request.form['tags'])).split(' '))
+        for tagstr in new_taglist:
+            tags[tagstr] = {'status': True}
         if not novel:
             novel = g.db_session.query(Novel).filter(Novel.user_id == user_id).\
                 filter(Novel.title == title).filter(Novel.status == False).first()
@@ -161,13 +190,14 @@ def update_novel(request, g, novel=None):
         novel.status = True
         g.db_session.add(novel)
         g.db_session.commit()
-        update_tags(novel, tags, g)
+        update_tags(g, novel, tags, admin=True)
         return {'status': True, 'id': novel.id}
     except:
         message = u'登録に失敗しました'
         return_page = render_template('update_novel.htm', message=message,
                                       title=u'エラー', novel=request.form,
                                       conf=g.config)
+        return {'status': False, 'page': return_page}
 
 
 def delete_user(g, user_id, reason):

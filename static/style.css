@@ -169,7 +169,7 @@ input:focus, input:active, input:hover, button:active, button:hover {
     color: #000;
 }
 
-.tags a:link, .tags a:active, .tags a:visited, #novel_info a, #novel_title a, #link{
+.tags a:link, .tags a:active, .tags a:visited, #novel_info a, #novel_title a, #link, .user a {
     text-decoration: none;
     color: #708090;
 }

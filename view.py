@@ -178,32 +178,16 @@ def novelinfo(novel_id):
 
 @app.route('/novel/tagedit/<int:novel_id>', methods=['POST'])
 def tagedit(novel_id):
-    novel = g.db_session.query(Novel).filter(Novel.id == novel_id).one()
+    novel = g.db_session.query(Novel).filter(Novel.id == novel_id).first()
     if not novel:
         abort(503)
-    taglist = []
+    tag_dict = {}
     for num in request.form:
         tagstr = util.encode_string(request.form.get(num))
-        if not tagstr:
+        if not tagstr or tagstr.find(' ') > 0:
             continue
-        taglist.append(tagstr)
-    edit_tags = [tag for tag in novel.active_tags if tag.status and tag.edit]
-    edit_taglist = [tag.tag for tag in edit_tags]
-    for tag in edit_tags:
-        if not tag.tag in taglist:
-            tag.status = False
-    for tagstr in taglist:
-        if not tagstr in edit_taglist:
-            tag = g.db_session.query(Tag).filter(Tag.tag == tagstr).\
-                    filter(Tag.novel_id == novel_id).first()
-            if not tag:
-                tag = Tag(tag=tagstr, novel_id=novel_id, edit=True)
-            if not tag.edit:
-                continue
-            tag.status = True
-            edit_tags.append(tag)
-    g.db_session.add_all(edit_tags)
-    g.db_session.commit()
+        tag_dict[tagstr] = {'status': True}
+    util.update_tags(g, novel, tag_dict)
     return ' '.join([tag.tag for tag in novel.active_tags])
 
 
@@ -272,8 +256,7 @@ def update_tags(novel_id):
                                              Novel.id == novel_id).first()
     if not novel:
         abort(503)
-    tag_dict = {}
-    new_taglist = []
+    data_list = []
     for num in request.form:
         data = request.form.get(num)
         data_dict = {}
@@ -287,28 +270,19 @@ def update_tags(novel_id):
             data_dict['tag'] = util.encode_string(x)
         if not data_dict:
             data_dict['tag'] = request.form.get(num)
-
         if not data_dict.get('tag'):
             continue
-        tag = g.db_session.query(Tag).filter(Tag.novel_id == novel_id).\
-                filter(Tag.tag == data_dict['tag']).first()
-        if not tag:
-            tag = Tag(tag=data_dict['tag'], novel_id=novel_id)
+        data_list.append(data_dict)
+    tag_dict = {}
+    data_list
+    for tag_data in data_list:
+        if tag_data.get('ban'):
+            tag_dict[tag_data['tag']] = {'edit': False, 'status': False}
+        elif tag_data.get('lock'):
+            tag_dict[tag_data['tag']] = {'edit': False, 'status': True}
         else:
-            tag.status = True
-            tag.edit = True
-        if data_dict.get('ban'):
-            tag.edit = False
-            tag.status = False
-        if data_dict.get('lock'):
-            tag.edit = False
-        new_taglist.append(tag)
-    for old_tag in novel.tag_list:
-        if not old_tag in new_taglist:
-            old_tag.status = False
-            new_taglist.append(old_tag)
-    g.db_session.add_all(new_taglist)
-    g.db_session.commit()
+            tag_dict[tag_data['tag']] = {'edit': True, 'status': True}
+    util.update_tags(g, novel, tag_dict, admin=True)
     return ' '.join([tag.tag for tag in novel.active_tags])
 
 
