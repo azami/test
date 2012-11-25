@@ -12,6 +12,7 @@ class InLog(db.Base):
     __tablename__ = 'in_logs'
 
     user_id = Column(Integer)
+    cookie = Column(String, default=None)
     date = Column(Date, primary_key=True, nullable=False)
     ua = Column(String, primary_key=True, nullable=False)
     ip = Column(String, primary_key=True, nullable=False)
@@ -26,6 +27,7 @@ class OutLog(db.Base):
     __tablename__ = 'out_logs'
 
     user_id = Column(Integer)
+    cookie = Column(String, default=None)
     novel_id = Column(Integer, nullable=False)
     date = Column(Date, primary_key=True, nullable=False)
     ua = Column(String, primary_key=True, nullable=False)
