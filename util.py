@@ -141,7 +141,6 @@ def update_tags(g, novel, new_tagdict, admin=False):
             if admin:
                 editable = new_tagdict[tagstr].get('edit', True)
                 old_tagdict[tagstr].edit = editable
-                print old_tagdict[tagstr].edit 
                 old_tagdict[tagstr].status = new_tagdict[tagstr]['status']
             new_taglist.append(old_tagdict[tagstr])
         else:
@@ -154,11 +153,12 @@ def update_tags(g, novel, new_tagdict, admin=False):
                 tag = Tag(tag=tagstr, novel_id=novel.id)
             new_taglist.append(tag)
     delete_tags = set(old_taglist) -set(new_taglist)
+    len(delete_tags)
     for tag in delete_tags:
         if admin:
             if not tag.status and not tag.edit:
                 tag.edit = True
-            tag.status = False
+        tag.status = False
     g.db_session.add_all(list(delete_tags) + list(new_taglist))
     g.db_session.commit()
     
