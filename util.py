@@ -28,6 +28,7 @@ def encode_string(string):
 def exist_url(url):
     if not url.startswith('http://') and not url.startswith('https://'):
         return False
+    return True
     agentreq = urllib2.Request(url)
     agentreq.add_header('User-Agent', AGENT)
     mobagentreq = urllib2.Request(url)
