@@ -19,7 +19,7 @@ def require_login(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         if request.url.startswith('http://') and not app.debug:
-            return redirect(url.replace('http://', 'https://', 1))
+            return redirect(request.url.replace('http://', 'https://', 1))
         if not 'user' in session:
             return redirect(url_for('login'))
         return func(*args, **kwargs)
@@ -45,73 +45,85 @@ def robots():
 
 @app.route('/')
 def index():
-    tag_list = [x[0] for x in \
-                      g.db_session.query(Tag.tag).filter(Tag.status == True).all()]
-    sorted_tag = sorted(set(tag_list),
-                        reverse=True, key=lambda x: tag_list.count(x))
-    if len(tag_list) > 200:
-        sorted_tag = sorted_tag[:200]
-    tags={}
-    for tag in sorted_tag:
-        tags[tag]= {'size': int(len(tag_list) // tag_list.count(tag)),
-                    'num': tag_list.count(tag)}
-    return render_template('index.htm', tags=tags, conf=g.config)
+    try:
+        tag_list = [x[0] for x in \
+                    g.db_session.query(Tag.tag).filter(Tag.status == True).all()]
+        sorted_tag = sorted(set(tag_list),
+                            reverse=True, key=lambda x: tag_list.count(x))
+        if len(tag_list) > 200:
+            sorted_tag = sorted_tag[:200]
+        tags={}
+        for tag in sorted_tag:
+            tags[tag]= {'size': int(len(tag_list) // tag_list.count(tag)),
+                        'num': tag_list.count(tag)}
+        return render_template('index.htm', tags=tags, conf=g.config)
+    except:
+        return internal_server_error('リロードしてみてください')
 
 
 @app.route('/tag/<tag>')
 @app.route('/tag/<tag>/<int:page>')
 def tag_search(tag, page=0):
-    tags = g.db_session.query(Tag).filter(Tag.tag == tag).filter(Tag.status\
+    try:
+        tags = g.db_session.query(Tag).filter(Tag.tag == tag).filter(Tag.status\
                                                                  == True).all()
-    tags = util.search_result(page, tags)
-    if not tags:
-        return page_not_found(u'検索結果がないです')
-    novels = [tag.novel for tag in tags if tag.novel.status]
-    novels = sorted(novels, key=lambda x: x.id)
-    page += 1
-    return render_template('search.htm', novels=novels,
-                           page=page, conf=g.config)
+        tags = util.search_result(page, tags)
+        if not tags:
+            return page_not_found(u'検索結果がないです')
+        novels = [tag.novel for tag in tags if tag.novel.status]
+        novels = sorted(novels, key=lambda x: x.id)
+        page += 1
+        return render_template('search.htm', novels=novels,
+                               page=page, conf=g.config)
+    except:
+        return internal_server_error('リロードしてみてください')
 
 
 @app.route('/search')
 @app.route('/search/<int:page>')
 def search(page=0):
-    novels = []
-    words = util.encode_string(request.args['words']).split()
-    user_query = g.db_session.query(User).filter(User.status == True)
-    novel_query = g.db_session.query(Novel).filter(Novel.status == True)
-    tag_query = g.db_session.query(Tag).filter(Tag.status == True)
-    for word in words:
-        user_query = user_query.filter(User.name.like('%' + word+ '%'))
-        novel_query = novel_query.filter(Novel.title.like('%' + word + '%'))
-        novel_query = novel_query.filter(Novel.summary.like('%' + word + '%'))
-        tag_query = tag_query.filter(Tag.tag.like('%' + word +'%'))
+    try:
+        novels = []
+        words = util.encode_string(request.args['words']).split()
+        user_query = g.db_session.query(User).filter(User.status == True)
+        novel_query = g.db_session.query(Novel).filter(Novel.status == True)
+        tag_query = g.db_session.query(Tag).filter(Tag.status == True)
+        for word in words:
+            user_query = user_query.filter(User.name.like('%' + word+ '%'))
+            novel_query = novel_query.filter(Novel.title.like('%' + word + '%'))
+            novel_query = novel_query.filter(Novel.summary.like('%' + word + '%'))
+            tag_query = tag_query.filter(Tag.tag.like('%' + word +'%'))
 
-    for user in user_query:
-        novels += [novel for novel in user.novel_list if novel.status]
-    novels += novel_query.all()
-    tags = tag_query.all()
-    novels += [tag.novel for tag in tags if tag.novel.status]
-    if not novels:
-        return page_not_found(u'検索結果がないです')
-    novellist = list(set(novels))
-    novels = sorted(util.search_result(page, novels),
-                    key=lambda x: x.id)
-    page += 1
-    return render_template('search.htm', novels=novels, page=page,
-                           reqpage="search", words=request.args['words'],
-                           pnum=int(len(novellist) / page), conf=g.config)
+        for user in user_query:
+            novels += [novel for novel in user.novel_list if novel.status]
+        novels += novel_query.all()
+        tags = tag_query.all()
+        novels += [tag.novel for tag in tags if tag.novel.status]
+        if not novels:
+            return page_not_found(u'検索結果がないです')
+        novellist = list(set(novels))
+        novels = sorted(util.search_result(page, novels),
+                        key=lambda x: x.id)
+        page += 1
+        return render_template('search.htm', novels=novels, page=page,
+                               reqpage="search", words=request.args['words'],
+                               pnum=int(len(novellist) / page), conf=g.config)
+    except:
+        return internal_server_error('リロードしてみてください')
     
 
 @app.route('/user')
 @require_login
 def user_index():
-    user = g.db_session.query(User).filter(User.id == session['user']).first()
-    if not user:
-        message = u'未知のエラーです'
-        return render_template('error.htm', message=message, conf=g.config)
-    return render_template('profile.htm', user=user,
-                           novels=user.novel_list, conf=g.config)
+    try:
+        user = g.db_session.query(User).filter(User.id == session['user']).first()
+        if not user:
+            message = u'未知のエラーです'
+            return render_template('error.htm', message=message, conf=g.config)
+        return render_template('profile.htm', user=user,
+                               novels=user.novel_list, conf=g.config)
+    except:
+        return internal_server_error('リロードしてみてください')
 
 
 @app.route('/login', methods=['GET', 'POST'])

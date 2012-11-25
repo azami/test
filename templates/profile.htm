@@ -11,7 +11,7 @@
         <dt><i class="icon-envelope"></i></dt>
         <dd>{{ user.mail }}</dd>
         <dt><i class="icon-external-link"></i></dt>
-        <dd>{{ user.site }} <a href="{{ url }}" target="_top">{{ user.url }}</a></dd>
+        <dd>{{ user.site }} <a href="{{ user.url }}" target="_top">{{ user.url }}</a></dd>
     </dl>
     <div id="usermenu">
         {{ forms.linkbutton(url_for('add_novel'), "ADD NOVEL", "icon-plus") }}

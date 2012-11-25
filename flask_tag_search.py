@@ -19,7 +19,7 @@ def before_request():
     g.db_session = db.Session(bind=db.engine)
     g.logdb_session = db.Session(bind=log_db.engine)
     user_id = request.args.get('linkid')
-    util.logging_in(g, request, user_id)
+#    util.logging_in(g, request, user_id)
     
 
 @app.teardown_request
