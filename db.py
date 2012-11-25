@@ -4,7 +4,7 @@ from sqlalchemy import Column, Integer, String, Boolean, TEXT, DateTime, TIMESTA
         UniqueConstraint, ForeignKey, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker, scoped_session
-from config import db_config, LINKPATH
+from config import db_config
 import urllib
 import datetime
 

@@ -2,7 +2,7 @@
 
 from flask import Flask, request, g, render_template, url_for, session, redirect,\
         jsonify, abort
-from config import Config, ROBOTS, LINKPATH
+from config import Config, ROBOTS
 from db import User, Novel, Tag
 import util
 from urlparse import urljoin
