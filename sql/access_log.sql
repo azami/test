@@ -13,6 +13,7 @@ create table in_logs(
     constraint in_key unique (date, ua, ip, refer),
     index refer(refer)
 );
+ALTER TABLE in_logs CONVERT TO CHARACTER SET utf8 COLLATE utf8_general_ci;
 
 create table out_logs(
     user_id integer default null,
@@ -24,6 +25,7 @@ create table out_logs(
     url varchar(255) default null,
     constraint out_key unique (date, ua, ip, novel_id)
 );
+ALTER TABLE out_logs CONVERT TO CHARACTER SET utf8 COLLATE utf8_general_ci;
     
 create table user_logs(
     user_id integer unique,

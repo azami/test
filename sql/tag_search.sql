@@ -12,6 +12,7 @@ create table users (
     url varchar(255) not null,
     status smallint(1) not null default 1
 );
+ALTER TABLE users CONVERT TO CHARACTER SET utf8 COLLATE utf8_general_ci;
 
 create table novels (
     id integer primary key auto_increment,
@@ -26,6 +27,7 @@ create table novels (
     constraint user_novel unique (user_id, title),
     index author (user_id)
 );
+ALTER TABLE novels CONVERT TO CHARACTER SET utf8 COLLATE utf8_general_ci;
 
 create table tags (
     novel_id integer not null,
@@ -37,4 +39,5 @@ create table tags (
     index tag (tag),
     index novel(novel_id)
 );
+ALTER TABLE tags CONVERT TO CHARACTER SET utf8 COLLATE utf8_general_ci;
 set foreign_key_checks = 1;
