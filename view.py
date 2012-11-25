@@ -302,8 +302,8 @@ def update_tags(novel_id):
 @app.route('/link/<int:id>')
 def link_to_site(id=0, tag=None):
     to = request.args.get('to')
-    if id:
-        util.logging_out(g, request, to, id)
+    #if id:
+    #    util.logging_out(g, request, to, id)
     return redirect(urllib2.unquote(to))
 
 
