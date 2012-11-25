@@ -154,7 +154,7 @@ def logout():
 def signup():
     path = urljoin(request.url_root, url_for('register'))
     if not app.debug:
-        path = request.url_root.replace('http://', 'https://', 1)
+        path = path.replace('http://', 'https://', 1)
     return render_template('update_user.htm', path=path, user=None, conf=g.config)
 
 
