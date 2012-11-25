@@ -293,3 +293,8 @@ def link_to_site(id=0, tag=None):
     if id:
         util.logging_out(g, request, to, id)
     return redirect(urllib2.unquote(to))
+
+
+@app.route('/about')
+def about():
+    return render_template('about.htm')

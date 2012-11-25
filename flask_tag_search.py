@@ -7,7 +7,6 @@ import db
 import log_db
 import util
 
-app.debug = True
 
 @app.before_request
 def before_request():
