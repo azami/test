@@ -45,7 +45,7 @@ def robots():
 
 @app.route('/')
 def index():
-    try:
+    def show_taglist():
         tag_list = [x[0] for x in \
                     g.db_session.query(Tag.tag).filter(Tag.status == True).all()]
         sorted_tag = sorted(set(tag_list),
@@ -57,12 +57,11 @@ def index():
             tags[tag]= {'size': int(len(tag_list) // tag_list.count(tag)),
                         'num': tag_list.count(tag)}
         return render_template('index.htm', tags=tags, conf=g.config)
-    except:
-        try:
-            return index()
-        except:
-            return internal_server_error(u'リロードしてみてください')
 
+    try:
+        return show_taglist()
+    except:
+        return show_taglist()
 
 
 @app.route('/tag/<tag>')
