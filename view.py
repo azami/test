@@ -58,7 +58,11 @@ def index():
                         'num': tag_list.count(tag)}
         return render_template('index.htm', tags=tags, conf=g.config)
     except:
-        return internal_server_error(u'リロードしてみてください')
+        try:
+            return index()
+        except:
+            return internal_server_error(u'リロードしてみてください')
+
 
 
 @app.route('/tag/<tag>')

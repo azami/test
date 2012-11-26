@@ -17,7 +17,7 @@ def create_dbengine(config):
                          (config['db_connect'],
                           config['db_user'],
                           config['db_password'],
-                          config['database']))
+                          config['database']), pool_recycle=3600)
 
 Base = declarative_base()
 Session = sessionmaker()

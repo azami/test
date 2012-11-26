@@ -2,6 +2,7 @@
 
 body {
     background-color: #dcdcdc;
+    color: gray;
 }
 
 input:focus {
